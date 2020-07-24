@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: dsp-collection">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib_test/libs/dsp-collection.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

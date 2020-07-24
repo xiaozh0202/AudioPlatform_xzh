@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: flycapture-2.13.3.31-1.5.3-windows-x86">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.bytedeco/flycapture/2.13.3.31-1.5.3/36d8db0cd1d6369fecff6e9dc031a6d879229dbd/flycapture-2.13.3.31-1.5.3-windows-x86.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.bytedeco/flycapture/2.13.3.31-1.5.3/a2f98d55914d838ecfccf36b1dd8aad14af2248b/flycapture-2.13.3.31-1.5.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

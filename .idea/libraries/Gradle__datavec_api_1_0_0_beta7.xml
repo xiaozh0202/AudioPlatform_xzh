@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: datavec-api-1.0.0-beta7">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.datavec/datavec-api/1.0.0-beta7/dfe5ec225f802142a65c6c0b050b809f2a3f0f05/datavec-api-1.0.0-beta7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.datavec/datavec-api/1.0.0-beta7/3d003cd206d4a11c7631eb4e296c97abd2454034/datavec-api-1.0.0-beta7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

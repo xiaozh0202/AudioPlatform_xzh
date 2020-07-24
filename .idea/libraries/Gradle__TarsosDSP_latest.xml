@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: TarsosDSP-latest">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib_test/libs/TarsosDSP-latest.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
