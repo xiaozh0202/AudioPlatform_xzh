@@ -1,11 +1,9 @@
 package com.fruitbasket.audioplatform.ui;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -15,14 +13,9 @@ import android.media.AudioFormat;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.RadioGroup;
 import android.widget.SeekBar;
-import android.widget.TabHost;
 import android.widget.TextView;
-import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -35,7 +28,6 @@ import com.fruitbasket.audioplatform.WaveProducer;
 import com.fruitbasket.audioplatform.play.Player;
 import com.fruitbasket.audioplatform.play.WavePlayer;
 import com.fruitbasket.audioplatform.play2.GlobalConfig;
-import com.fruitbasket.audioplatform.record.PredictWav;
 
 import org.tensorflow.lite.Interpreter;
 
@@ -49,9 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.chaquo.python.Kwarg;
@@ -76,8 +66,8 @@ final public class MainActivity extends Activity {
 
 
     private int channelOut= Player.CHANNEL_OUT_BOTH;
-    //private int channelIn= AudioFormat.CHANNEL_IN_MONO;
-    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
+    private int channelIn= AudioFormat.CHANNEL_IN_MONO;
+//    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
     private int waveRate;//声波的频率
 
     public  int iBeginHz = 19000;
