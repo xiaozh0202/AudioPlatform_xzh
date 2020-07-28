@@ -73,7 +73,7 @@ public class WaveData {
                 }
             }
         }
-        this.plotData = resize(this.plotData);
+//        this.plotData = resize(this.plotData);
 
     }
 

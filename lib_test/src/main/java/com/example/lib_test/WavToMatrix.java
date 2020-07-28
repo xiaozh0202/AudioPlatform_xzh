@@ -80,14 +80,14 @@ public class WavToMatrix {
 //        out.close();
 
 
-        double[][] plotData_new;
-        plotData_new = resize(plotData);
+//        double[][] plotData_new;
+//        plotData_new = resize(plotData);
 //        System.out.println(plotData_new.length+" "+plotData_new[0].length+" "+plotData_new[0][0]);
         File file = new File(txtpath);
         FileWriter out = new FileWriter(file);
-        for (int i = 0; i < 113; i++){
+        for (int i = 0; i < nX; i++){
             for (int j = 0; j < 113; j++) {
-                out.write(plotData_new[i][j] + "\t");
+                out.write(plotData[i][j] + "\t");
             }
         }
 //        System.out.print(plotData_new.length+" "+plotData_new[0].length+" "+plotData_new[0][0]+" ");

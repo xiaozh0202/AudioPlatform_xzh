@@ -9,6 +9,8 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioFormat;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -40,6 +42,7 @@ import org.tensorflow.lite.Interpreter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -70,9 +73,6 @@ final public class MainActivity extends Activity {
     private boolean load_result = false;
     private TextView result_text;
     private List<String> resultLabel = new ArrayList<>();
-    private TextView batterLevel;
-    private BroadcastReceiver batteryLevelRcvr;
-    private IntentFilter batteryLevelFilter;
 
 
     private int channelOut= Player.CHANNEL_OUT_BOTH;
@@ -84,6 +84,8 @@ final public class MainActivity extends Activity {
     public  int iStepHz=0;
     public  int ifreqNum = 1;
     public  int iSimpleHz = 44100;
+
+    private int[] ddims = {1, 3, 28, 28};
 
     private Intent intent;
     private AudioService audioService;
@@ -111,7 +113,7 @@ final public class MainActivity extends Activity {
         result_text = (TextView) findViewById(R.id.result_text);
 //        batterLevel = (TextView)findViewById(R.id.batteryLevel);
         readCacheLabelFromLocalFile();
-        load_model("MNmodel_v33");
+        load_model("model_v28");
 //        monitorBatteryState();
         initializeViews();
         initPython();
@@ -129,14 +131,6 @@ final public class MainActivity extends Activity {
             Python.start(new AndroidPlatform(this));
         }
     }
-
-    void callpythoncode(){
-        Python py = Python.getInstance();
-        PyObject obj1 = py.getModule("test_code").callAttr("add",2,3);
-        Integer sum = obj1.toJava(Integer.class);
-        Log.i(TAG,"python's add = " + sum.toString());
-    }
-
 
     @Override
     protected void onStart(){
@@ -231,7 +225,11 @@ final public class MainActivity extends Activity {
                     if (isChecked) {
                         startRecordWav();
                     } else {
-                        stopRecord();
+                        try {
+                            stopRecord();
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
                     }
                     break;
                 default:
@@ -280,7 +278,7 @@ final public class MainActivity extends Activity {
 
         }
 
-        private void stopRecord(){
+        private void stopRecord() throws FileNotFoundException {
             Log.i(TAG,"stopRecord()");
             if(audioService!=null){
                 audioService.stopRecord();
@@ -346,17 +344,71 @@ final public class MainActivity extends Activity {
         }
     }
 
-    public static ByteBuffer getScaledMatrix(double[][] fft_data) {
-        ByteBuffer imgData = ByteBuffer.allocateDirect(113*113*4);
+    public static ByteBuffer getScaledMatrixtxt(double[][] fft_data) {
+        long start = System.currentTimeMillis();
+        Python py = Python.getInstance();
+        PyObject obj1 = py.getModule("function").callAttr("resize",new Kwarg("numlist", fft_data));
+        long end = System.currentTimeMillis();
+        long time = end - start;
+        Log.i(TAG,"resize data time used :" +time);
+        double[][] new_fft_data = obj1.toJava(double[][].class);
+        ByteBuffer imgData = ByteBuffer.allocateDirect(56*56*4);
         imgData.order(ByteOrder.nativeOrder());
-        for (int i = 0; i < 113; ++i) {
-            for (int j = 0; j < 113; ++j) {
-                final double val = fft_data[i][j];
+        for (int i = 0; i < 56; ++i) {
+            for (int j = 0; j < 56; ++j) {
+//                final double val = fft_data[i][j];
+                final double val = new_fft_data[i][j];
                 imgData.putFloat((float) val);
             }
         }
         return imgData;
     }
+
+    public static ByteBuffer getScaledMatrix(Bitmap bitmap, int[] ddims) {
+        ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
+        imgData.order(ByteOrder.nativeOrder());
+        // get image pixel
+        int[] pixels = new int[ddims[2] * ddims[3]];
+        Bitmap bm = Bitmap.createScaledBitmap(bitmap, ddims[2], ddims[3], false);
+        bm.getPixels(pixels, 0, bm.getWidth(), 0, 0, ddims[2], ddims[3]);
+        int pixel = 0;
+//        Log.i(TAG,"first pixel is :" +pixels[0]);
+        for (int i = 0; i < ddims[2]; ++i) {
+            for (int j = 0; j < ddims[3]; ++j) {
+                final int val = pixels[pixel++];
+                imgData.putFloat(((val & 0x000000ff) )/255f);
+                imgData.putFloat(((val & 0x0000ff00)>>8 )/255f);
+                imgData.putFloat(((val & 0x00ff0000) >>16)/255f);
+            }
+        }
+
+        if (bm.isRecycled()) {
+            bm.recycle();
+        }
+        return imgData;
+    }
+
+    // compress picture
+    public static Bitmap getScaleBitmap(String filePath) {
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(filePath, opt);
+
+        int bmpWidth = opt.outWidth;
+        int bmpHeight = opt.outHeight;
+        int maxSize = 500;
+        // compress picture with inSampleSize
+        opt.inSampleSize = 1;
+        while (true) {
+            if (bmpWidth / opt.inSampleSize < maxSize || bmpHeight / opt.inSampleSize < maxSize) {
+                break;
+            }
+            opt.inSampleSize += 2;
+        }
+        opt.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(filePath, opt);
+    }
+
 
     // get max probability label
     // predict image
@@ -418,15 +470,25 @@ final public class MainActivity extends Activity {
 //        registerReceiver(batteryLevelRcvr, batteryLevelFilter);
 //    }
 
-    private void PredictWav(String path){
+    private void PredictWav(String path) throws FileNotFoundException {
         File f = new File(path);
         while (true){
             if(f.exists()){
                 Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
-//                WaveData reader = new WaveData("/storage/emulated/0/AcouDigits/2020-06-14_16h-07m-31s.wav");
+//                WaveData reader = new WaveData("/storage/emulated/0/AcouDigits/rec2018-12-27_22h33m44.298s.wav");
+//                path = "/storage/emulated/0/AcouDigits/rec2018-12-27_22h33m44.298s.wav";
                 WaveData reader = new WaveData(path);
+                long start1 = System.currentTimeMillis();
+//                Python py = Python.getInstance();
+//                String pic_path = path.substring(0,path.length()-4)+ ".png";
+//                PyObject obj1 = py.getModule("workFlow").callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
+//                long end1 = System.currentTimeMillis();
+//                long time = end1 - start1;
+//                Log.i(TAG,"python plot fft picture time used :" +time);
+//                Bitmap bmp = getScaleBitmap(pic_path);
+//                ByteBuffer inputData = getScaledMatrix(bmp, ddims);
                 double[][] tempdata = reader.getData();
-                ByteBuffer inputData =getScaledMatrix(tempdata);
+                ByteBuffer inputData =getScaledMatrixtxt(tempdata);
                 try {
                     float[][] labelProbArray = new float[1][10];
                     long start = System.currentTimeMillis();
@@ -439,8 +501,8 @@ final public class MainActivity extends Activity {
                     // show predict result and time
                     int[] r = get_max_result(results);
                     String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ results[r[0]]*100+"%\n\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
+//                    callpythonadd();//add code
                     result_text.setText(show_text);
-                    callpythoncode();//添加行
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

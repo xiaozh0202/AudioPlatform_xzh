@@ -5,10 +5,10 @@ import java.io.IOException;
 
 public class make_data {
     public static void main(String[] args) throws IOException {
-        String outputpath_org = "D:\\ALL_WORK\\AcouDigits\\data\\txt_data\\withResize224\\HSC";
+        String outputpath_org = "D:\\ALL_WORK\\AcouDigits\\data\\txt_data\\withOutResize\\XZH";
         int all_index = 0;
         String[] filepath = {
-                "D:\\ALL_WORK\\AcouDigits\\data\\wav_data\\HSC",
+                "D:\\ALL_WORK\\AcouDigits\\data\\wav_data\\XZH",
 //                "D:\\ALL_WORK\\AcouDigits\\data\\wav_data\\HYT",
 //                "D:\\ALL_WORK\\AcouDigits\\data\\wav_data\\WD",
 //                "D:\\ALL_WORK\\AcouDigits\\data\\wav_data\\YQ",
