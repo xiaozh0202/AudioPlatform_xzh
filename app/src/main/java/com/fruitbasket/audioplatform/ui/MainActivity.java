@@ -1,8 +1,10 @@
 package com.fruitbasket.audioplatform.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.AssetFileDescriptor;
@@ -13,7 +15,10 @@ import android.media.AudioFormat;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +47,10 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.chaquo.python.Kwarg;
 import com.chaquo.python.PyObject;
@@ -62,6 +70,7 @@ final public class MainActivity extends Activity {
     private Interpreter tflite = null;
     private boolean load_result = false;
     private TextView result_text;
+    private ImageView picture1;
     private List<String> resultLabel = new ArrayList<>();
 
 
@@ -75,7 +84,12 @@ final public class MainActivity extends Activity {
     public  int ifreqNum = 1;
     public  int iSimpleHz = 44100;
 
-    private int[] ddims = {1, 3, 28, 28};
+    private int model_index = 0;
+    private int[] ddims = {1, 3, 56, 56};
+    private static final String[] PADDLE_MODEL = {
+            "model_v48"
+    };
+
 
     private Intent intent;
     private AudioService audioService;
@@ -101,12 +115,15 @@ final public class MainActivity extends Activity {
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.activity_main);
         result_text = (TextView) findViewById(R.id.result_text);
-//        batterLevel = (TextView)findViewById(R.id.batteryLevel);
+        picture1 = (ImageView) findViewById(R.id.show_image);
         readCacheLabelFromLocalFile();
-        load_model("model_v28");
-//        monitorBatteryState();
+//        load_model("model_v33");
         initializeViews();
+        long start1 = System.currentTimeMillis();
         initPython();
+        long end1 = System.currentTimeMillis();
+        long time = end1 - start1;
+        Log.d(TAG,"time used :"+ time);
         intent=new Intent(this,AudioService.class);
         if(audioService ==null) {
             Log.i(TAG,"begin to bind service");
@@ -196,7 +213,47 @@ final public class MainActivity extends Activity {
 
         recorderTB=(ToggleButton)findViewById(R.id.recorder_tb);
         recorderTB.setOnCheckedChangeListener(tcListener);
+
+
+        Button load_model = (Button) findViewById(R.id.load_model);
+        load_model.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showDialog();
+            }
+        });
     }
+
+
+    public void showDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        // set dialog title
+        builder.setTitle("Please select model");
+
+        // set dialog icon
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+
+        // able click other will cancel
+        builder.setCancelable(true);
+
+        // cancel button
+        builder.setNegativeButton("cancel", null);
+
+        // set list
+        builder.setSingleChoiceItems(PADDLE_MODEL, model_index, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                model_index = which;
+                load_model(PADDLE_MODEL[model_index]);
+                dialog.dismiss();
+            }
+        });
+
+        // show dialog
+        builder.show();
+    }
+
 
     private class ToggleCheckedChangeListener implements CompoundButton.OnCheckedChangeListener{
         private static final String TAG="...TCCListener";
@@ -369,6 +426,7 @@ final public class MainActivity extends Activity {
                 imgData.putFloat(((val & 0x000000ff) )/255f);
                 imgData.putFloat(((val & 0x0000ff00)>>8 )/255f);
                 imgData.putFloat(((val & 0x00ff0000) >>16)/255f);
+//                Log.i(TAG,"rgb:" +((val & 0x000000ff) )/255f+ " ,"+ ((val & 0x0000ff00)>>8 )/255f + " ," + ((val & 0x00ff0000) >>16)/255f);
             }
         }
 
@@ -403,28 +461,34 @@ final public class MainActivity extends Activity {
     // get max probability label
     // predict image
     private int[] get_max_result(float[] result) {
-        float probability = result[0];
-        float sepro = result[0];
-        int[] r = {0,0};
-        for (int i = 0; i < result.length; i++) {
-            if (probability < result[i]) {
-                r[1] = r[0];
-                sepro = probability;
-                probability = result[i];
-                r[0] = i;
-            }
-            else if(sepro<result[i]){
-                r[1] = i;
-                sepro = result[i];
+        float[] temp = new float[result.length];
+        System.arraycopy(result, 0, temp, 0, result.length);
+        Arrays.sort(temp);
+        int[] top_five = new int[5];
+        for(int i=0;i<5;i++){
+            float max = temp[result.length-i-1];
+            for(int j=0;j<result.length;j++){
+                if (result[j]==max){
+                    top_five[i] = j;
+                }
             }
         }
-        return r;
+        return top_five;
+//        float probability = result[0];
+//        int r = 0;
+//        for (int i = 1; i < result.length; i++) {
+//            if (probability < result[i]) {
+//                probability = result[i];
+//                r = i;
+//            }
+//        }
+//        return r;
     }
 
     private void readCacheLabelFromLocalFile() {
         try {
             AssetManager assetManager = getApplicationContext().getAssets();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open("labels.txt")));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open("30labels.txt")));
             String readLine = null;
             while ((readLine = reader.readLine()) != null) {
                 resultLabel.add(readLine);
@@ -466,33 +530,53 @@ final public class MainActivity extends Activity {
             if(f.exists()){
                 Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
 //                WaveData reader = new WaveData("/storage/emulated/0/AcouDigits/rec2018-12-27_22h33m44.298s.wav");
-//                path = "/storage/emulated/0/AcouDigits/rec2018-12-27_22h33m44.298s.wav";
-                WaveData reader = new WaveData(path);
+//                path = "/storage/emulated/0/AcouDigits/0/2020-08-05_21h-37m-16s.wav";
+//                WaveData reader = new WaveData(path);
+
                 long start1 = System.currentTimeMillis();
-//                Python py = Python.getInstance();
-//                String pic_path = path.substring(0,path.length()-4)+ ".png";
-//                PyObject obj1 = py.getModule("workFlow").callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
-//                long end1 = System.currentTimeMillis();
-//                long time = end1 - start1;
-//                Log.i(TAG,"python plot fft picture time used :" +time);
-//                Bitmap bmp = getScaleBitmap(pic_path);
-//                ByteBuffer inputData = getScaledMatrix(bmp, ddims);
-                double[][] tempdata = reader.getData();
-                ByteBuffer inputData =getScaledMatrixtxt(tempdata);
+                Python py = Python.getInstance();
+                String pic_path = path.substring(0,path.length()-4)+ ".png";
+                PyObject obj1 = py.getModule("workFlow").callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
+                long end1 = System.currentTimeMillis();
+                long time = end1 - start1;
+                Log.i(TAG,"python plot fft picture time used :" +time);
+                Bitmap bmp = getScaleBitmap(pic_path);
+                ByteBuffer inputData = getScaledMatrix(bmp, ddims);
+
+//                double[][] tempdata = reader.getData();
+//                ByteBuffer inputData =getScaledMatrixtxt(tempdata);
                 try {
-                    float[][] labelProbArray = new float[1][10];
+                    float[][] labelProbArray = new float[1][30];
                     long start = System.currentTimeMillis();
                     // get predict result
+                    // multiple input
+//                    Object[] input = {inputData,inputData,inputData};
+//                    Map<Integer, Object> outputs = new HashMap();
+//                    outputs.put(0, labelProbArray);
+//                    tflite.runForMultipleInputsOutputs(input, outputs);
+                    // single input
                     tflite.run(inputData, labelProbArray);
                     long end = System.currentTimeMillis();
-                    long time = end - start;
+                    time = end - start;
+
                     float[] results = new float[labelProbArray[0].length];
                     System.arraycopy(labelProbArray[0], 0, results, 0, labelProbArray[0].length);
+                    //                  add code 8.14
+                    float[] new_resluts= new float[10];
+                    for(int i=0;i<10;i++){
+                        new_resluts[i] = results[i*3] + results[i*3+1] + results[i*3+2];
+                    }
+//                   add code 8.14
                     // show predict result and time
-                    int[] r = get_max_result(results);
-                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ results[r[0]]*100+"%\n\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
+                    int[] r = get_max_result(new_resluts);
+                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n"
+                            + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+"%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
 //                    callpythonadd();//add code
                     result_text.setText(show_text);
+
+//                    展示频谱图
+                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
+                    picture1.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

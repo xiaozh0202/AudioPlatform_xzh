@@ -9,8 +9,8 @@ android {
         applicationId "com.fruitbasket.audioplatform"
         minSdkVersion 21
         targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        versionCode 21
+        versionName "1.21"
         ndk {
             // 指定abi，如需在模拟器调试，增加",x86"，否则指定"armeabi-v7a"即可
             abiFilters "armeabi-v7a","x86"

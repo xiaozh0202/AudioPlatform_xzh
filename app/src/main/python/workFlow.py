@@ -76,13 +76,8 @@ def audio_to_picture2(wav_path,pic_path):
     plt.gca().yaxis.set_major_locator(plt.NullLocator())
     plt.subplots_adjust(top=1,bottom=0,left=0,right=1,hspace=0,wspace=0)
     plt.margins(0,0)
-    plt.gcf().set_size_inches(28/96, 28/96)
-    # plt.colorbar()
-    # plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
-    # plt.margins(0,0)
-    # show和savefig使用顺序错误，会导致存不下来
+    plt.gcf().set_size_inches(224/96, 224/96)
     plt.savefig(pic_path, dpi=96)
-    plt.show()
 
 
 

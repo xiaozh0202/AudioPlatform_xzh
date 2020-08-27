@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">AcouDigits</string>
-    <string name="app_version_name">v1.13.0</string>
-    <string name="app_full_name">AcouDigits v1.13.0</string>
+    <string name="app_version_name">v1.22.0</string>
+    <string name="app_full_name">AcouDigits v1.22.0</string>
 
     <string name="wave_player">wave player</string>
     <string name="choose_channel_out">choose a channel out : </string>
@@ -21,6 +21,7 @@
     <string name="StepHz">StepHz</string>
     <string name="freqNum">freqNum</string>
     <string name="simpleRate">simpleRate</string>
+    <string name="loadmodel">load model</string>>
 
 
 
