@@ -28,7 +28,6 @@ import com.fruitbasket.audioplatform.AppCondition;
 import com.fruitbasket.audioplatform.AudioService;
 import com.fruitbasket.audioplatform.Constents;
 import com.fruitbasket.audioplatform.R;
-import com.fruitbasket.audioplatform.WaveData;
 import com.fruitbasket.audioplatform.WaveProducer;
 import com.fruitbasket.audioplatform.play.Player;
 import com.fruitbasket.audioplatform.play.WavePlayer;
@@ -48,9 +47,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.chaquo.python.Kwarg;
 import com.chaquo.python.PyObject;
@@ -391,25 +388,6 @@ final public class MainActivity extends Activity {
         }
     }
 
-    public static ByteBuffer getScaledMatrixtxt(double[][] fft_data) {
-        long start = System.currentTimeMillis();
-        Python py = Python.getInstance();
-        PyObject obj1 = py.getModule("function").callAttr("resize",new Kwarg("numlist", fft_data));
-        long end = System.currentTimeMillis();
-        long time = end - start;
-        Log.i(TAG,"resize data time used :" +time);
-        double[][] new_fft_data = obj1.toJava(double[][].class);
-        ByteBuffer imgData = ByteBuffer.allocateDirect(56*56*4);
-        imgData.order(ByteOrder.nativeOrder());
-        for (int i = 0; i < 56; ++i) {
-            for (int j = 0; j < 56; ++j) {
-//                final double val = fft_data[i][j];
-                final double val = new_fft_data[i][j];
-                imgData.putFloat((float) val);
-            }
-        }
-        return imgData;
-    }
 
     public static ByteBuffer getScaledMatrix(Bitmap bitmap, int[] ddims) {
         ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
@@ -499,30 +477,6 @@ final public class MainActivity extends Activity {
         }
     }
 
-//    private void monitorBatteryState(){
-//        batteryLevelRcvr = new BroadcastReceiver(){
-//
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                // TODO Auto-generated method stub
-//                StringBuilder sb = new StringBuilder();
-//                double rawlevel = intent.getIntExtra("level", -1);
-//                int scale = intent.getIntExtra("scale", -1);
-////                int level = -1;
-////                if(rawlevel >= 0 && scale > 0){
-////                    level = (rawlevel*100)/scale;
-////                }
-//                sb.append("电池电量: ");
-////                sb.append(level + "%\n" + rawlevel+"/"+scale);
-//                sb.append(rawlevel+"/"+scale);
-//
-//                batterLevel.setText(sb.toString());
-//            }
-//
-//        };
-//        batteryLevelFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-//        registerReceiver(batteryLevelRcvr, batteryLevelFilter);
-//    }
 
     private void PredictWav(String path) throws FileNotFoundException {
         File f = new File(path);
@@ -559,18 +513,20 @@ final public class MainActivity extends Activity {
                     long end = System.currentTimeMillis();
                     time = end - start;
 
-                    float[] results = new float[labelProbArray[0].length];
-                    System.arraycopy(labelProbArray[0], 0, results, 0, labelProbArray[0].length);
+                    float[] resluts = new float[labelProbArray[0].length];
+                    System.arraycopy(labelProbArray[0], 0, resluts, 0, labelProbArray[0].length);
                     //                  add code 8.14
                     float[] new_resluts= new float[10];
                     for(int i=0;i<10;i++){
-                        new_resluts[i] = results[i*3] + results[i*3+1] + results[i*3+2];
+                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
                     }
 //                   add code 8.14
                     // show predict result and time
                     int[] r = get_max_result(new_resluts);
-                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n"
-                            + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+"%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
+                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +
+                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n" + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+
+                            "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
+                            "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
 //                    callpythonadd();//add code
                     result_text.setText(show_text);
 
