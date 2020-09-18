@@ -1,87 +1,73 @@
-import wave # read_wav方法使用
 
-
-def read_wav(file_path):
-    """
-    从路径file_path，读取并返回wav数据
-
-    file_path: wav文件路径
-
-    return: wav_data
-    """
-    wave_read = wave.open(file_path, "rb")
-    params = wave_read.getparams()
-    nchannels, sampwidth, framerate, nframes = params[:4]
-    str_data = wave_read.readframes(nframes)
-    wave_read.close()
-    wave_data = np.fromstring(str_data, dtype=np.short)
-    wave_data.shape = -1, 1
-    wave_data = wave_data.T
-    return wave_data / 32767, framerate
-
-def read_wav_scipy(wav_path):
-    from scipy.io import wavfile as wav
-    fs, signal = wav.read(wav_path)
-    return signal / 32767, fs
-
-def read_wav_len(wav_path):
-    wave_read = wave.open(wav_path, "rb")
-    params = wave_read.getparams()
-    nchannels, sampwidth, framerate, nframes = params[:4]
-    wave_read.close()
-    return framerate * nframes
-
-
-
-import numpy as np
-import scipy.signal as sig
-def preprocessing(wav_path):
-    wav_data, sample_rate = read_wav(wav_path)
-    wav_data = wav_data[0]
+def preprocessing_realtime(wav_data):
+    import io
+    import numpy as np
+    import scipy.signal as sig
+    import matplotlib.pyplot as plt
+    # from PIL import Image
+    register_cm()
+    sample_rate = 44100
 
     # bandpass filter
-    [b, a] = sig.butter(6, [18700/44100*2,19300/44100*2],'bandpass')
+    [b, a] = sig.butter(6, [18700 /sample_rate *2 ,19300 /sample_rate *2] ,'bandpass')
     BPsignal = sig.filtfilt(b, a, wav_data)
 
     # bandstop filter
-    [d, c] = sig.butter(3, [18985/44100*2,19015/44100*2],'bandstop')
+    [d, c] = sig.butter(3, [18985 /sample_rate *2 ,19015 /sample_rate *2] ,'bandstop')
     BPsignal = sig.filtfilt(d, c, BPsignal)
 
     nfft = 8192
     overlap = 7168
     step = nfft - overlap
 
-    # remove hardware noise
+    ## 如果是不停地播放和接收，是不需要截断前后来过滤硬件噪声的。
+    ## remove hardware noise
     head_noisenum = step*12 + 1
     tail_noisenum = step*5
     BPsignal = BPsignal[head_noisenum:-tail_noisenum]
 
-    # [f, t, Zxx] = sig.stft(BPsignal, 44100,window='hamm', nperseg=nfft, noverlap=overlap, detrend=False)
-    [f,t, Zxx] = sig.spectrogram(BPsignal, 44100, window="hamm", nperseg=nfft, noverlap=overlap, detrend=False)
-
+    [f ,t, Zxx] = sig.spectrogram(BPsignal, 44100, window="hamm", nperseg=nfft, noverlap=overlap, detrend=False)
     Zxx_magnitude = np.abs(Zxx)
     PP = 10 * np.log10(Zxx_magnitude + 2.2204e-16)
-    return f, t, PP
 
-
-import matplotlib.pyplot as plt
-def audio_to_picture2(wav_path,pic_path):
-    f, t, PP = preprocessing(wav_path)
-    plt.figure()
+    fig = plt.figure()
     plt.set_cmap('parula')
     plt.pcolormesh(t, f, PP)
-    plt.ylim([18700,19300])
+    plt.ylim([18700 ,19300])
     plt.axis("off")
     plt.gca().xaxis.set_major_locator(plt.NullLocator())
     plt.gca().yaxis.set_major_locator(plt.NullLocator())
-    plt.subplots_adjust(top=1,bottom=0,left=0,right=1,hspace=0,wspace=0)
-    plt.margins(0,0)
-    plt.gcf().set_size_inches(224/96, 224/96)
-    plt.savefig(pic_path, dpi=96)
+    plt.subplots_adjust(top=1 ,bottom=0 ,left=0 ,right=1 ,hspace=0 ,wspace=0)
+    plt.margins(0 ,0)
+    plt.gcf().set_size_inches(56 / 96, 56 / 96)
+    # plt.savefig("./testplt.png", dpi=96)
+    buffer = io.BytesIO()
+    fig.dpi = 96  # key code!!!
+    canvas = fig.canvas
+    canvas.print_png(buffer)
+
+    # plt.close(fig)
+    # img=Image.open(buffer)
+    # img=np.asarray(img)
+    # buffer.close()
+    # data = img[: ,: ,[0,1,2]] / 255
+    import cv2
+    buffer.seek(0)
+    img = cv2.imdecode(np.asarray(bytearray(buffer.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    buffer.close()
+    data = img[: ,: ,[2,1,0]] / 255
+    result = []
+    for i in data:
+        for j in i:
+            for k in j:
+                result.append(k)
+    return result
 
 
 
-def wav2picture(wav_path,pic_path):
+
+def register_cm():
     cm_data = [[0.2422, 0.1504, 0.6603],
                [0.2444, 0.1534, 0.6728],
                [0.2464, 0.1569, 0.6847],
@@ -338,10 +324,8 @@ def wav2picture(wav_path,pic_path):
                [0.973, 0.9724, 0.0938],
                [0.9749, 0.9782, 0.0872],
                [0.9769, 0.9839, 0.0805]]
-
     from matplotlib.colors import LinearSegmentedColormap
     from matplotlib import cm
     parula_map = LinearSegmentedColormap.from_list('parula', cm_data)
-    cm.register_cmap('parula',parula_map)
+    cm.register_cmap('parula' ,parula_map)
 
-    audio_to_picture2(wav_path,pic_path)

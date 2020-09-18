@@ -33,14 +33,11 @@ import uk.me.berndporr.iirj.Butterworth;
 public class WavRecorder extends Recorder {
     private static final String TAG="..WavRecorder";
 
-//    public static ByteArrayOutputStream bos = new ByteArrayOutputStream(512);
-//    ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-//    public static int[] pcmdata = null;
+    //（申请了一个数组存数据）
+    private int[] audioDate = new int[300000];
 
     private boolean isRecording;
     public static String audioName;//录音文件的名字
-
-    public String subDir;//用于存放录音文件的子目录
 
     public static String path = null;
 
@@ -80,7 +77,7 @@ public class WavRecorder extends Recorder {
                     Log.d(TAG,"create sub dir state=="+state);
 
                     audioName =getRecordedFileName();
-                    Constents.file_path = AppCondition.getAppExternalDir()+File.separator+audioName + ".wav";
+                    Constents.file_path = AppCondition.getAppExternalDir()+File.separator+audioName+".wav";
                     Log.i(TAG,"get audioname!!" );
                     File audioFile;
                     DataOutputStream output;
@@ -115,6 +112,12 @@ public class WavRecorder extends Recorder {
                             bufferSize);
                     audioRecord.startRecording();
 
+                    //                    add code 2020.9.17
+                    Byte[] tempdata = new Byte[3];
+                    int k = 0;
+                    int dataLength = 0;
+                    //                    add code 2020.9.17
+
                     isRecording = true;
                     while (isRecording) {
 
@@ -127,11 +130,28 @@ public class WavRecorder extends Recorder {
                             return;
                         } else {
                             for (int i = 0; i < readResult; i++) {
+
+                                //                    add code 2020.9.17
+                                tempdata[k] = buffer[i];
+                                k += 1 ;
+                                if(k == 2){
+                                    k = 0;
+                                    audioDate[dataLength] = addInt(tempdata);
+                                    dataLength++;
+                                }
+
+                                //                    add code 2020.9.17
                                 output.writeByte(buffer[i]);
-//                                bos.write(buffer[i]);
+//
                             }
                         }
                     }
+                    //                    add code 2020.9.17
+                    //（将存数据的数组以及数据规模声明成常量，方便MainActivity调用）
+                    Constents.datalist = audioDate;
+                    Constents.dataLength = dataLength;
+
+                    //                    add code 2020.9.17
 
 
 
@@ -196,7 +216,7 @@ public class WavRecorder extends Recorder {
                     }
                     inputStream.close();
                     outputStream.close();
-                    audioFile.delete();//删除原始的pcm文件
+//                    audioFile.delete();//删除原始的pcm文件
                     Log.i(TAG, "successful create wav file");
                     long end = System.currentTimeMillis();
                     Constents.makewavfiletime = end - start;
@@ -208,6 +228,15 @@ public class WavRecorder extends Recorder {
         }).start();
         return true;
     }
+
+
+    //    add code 2020.9.17
+    private int addInt(Byte[] tempdata){
+        int res = 0;
+        res = (tempdata[0] & 0x000000FF) + (((int) tempdata[1]) << 8);
+        return res;
+    }
+    //    add code 2020.9.17
 
     @Override
     public boolean stop() {

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">AcouDigits</string>
-    <string name="app_version_name">v1.22</string>
-    <string name="app_full_name">AcouDigits v1.22</string>
+    <string name="app_version_name">v1.26</string>
+    <string name="app_full_name">AcouDigits v1.26</string>
 
     <string name="wave_player">wave player</string>
     <string name="choose_channel_out">choose a channel out : </string>

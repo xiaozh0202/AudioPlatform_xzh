@@ -67,6 +67,7 @@ final public class MainActivity extends Activity {
     private Interpreter tflite = null;
     private boolean load_result = false;
     private TextView result_text;
+    private TextView result2_text;
     private ImageView picture1;
     private List<String> resultLabel = new ArrayList<>();
 
@@ -112,6 +113,7 @@ final public class MainActivity extends Activity {
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.activity_main);
         result_text = (TextView) findViewById(R.id.result_text);
+        result2_text = (TextView) findViewById(R.id.result2_text);
         picture1 = (ImageView) findViewById(R.id.show_image);
         readCacheLabelFromLocalFile();
 //        load_model("model_v33");
@@ -452,15 +454,6 @@ final public class MainActivity extends Activity {
             }
         }
         return top_five;
-//        float probability = result[0];
-//        int r = 0;
-//        for (int i = 1; i < result.length; i++) {
-//            if (probability < result[i]) {
-//                probability = result[i];
-//                r = i;
-//            }
-//        }
-//        return r;
     }
 
     private void readCacheLabelFromLocalFile() {
@@ -477,66 +470,63 @@ final public class MainActivity extends Activity {
         }
     }
 
-
+//333行进行了调用
     private void PredictWav(String path) throws FileNotFoundException {
         File f = new File(path);
         while (true){
             if(f.exists()){
                 Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
-//                WaveData reader = new WaveData("/storage/emulated/0/AcouDigits/rec2018-12-27_22h33m44.298s.wav");
-//                path = "/storage/emulated/0/AcouDigits/0/2020-08-05_21h-37m-16s.wav";
-//                WaveData reader = new WaveData(path);
-
-                long start1 = System.currentTimeMillis();
                 Python py = Python.getInstance();
-                String pic_path = path.substring(0,path.length()-4)+ ".png";
-                PyObject obj1 = py.getModule("workFlow").callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
-                long end1 = System.currentTimeMillis();
-                long time = end1 - start1;
-                Log.i(TAG,"python plot fft picture time used :" +time);
-                Bitmap bmp = getScaleBitmap(pic_path);
-                ByteBuffer inputData = getScaledMatrix(bmp, ddims);
 
-//                double[][] tempdata = reader.getData();
-//                ByteBuffer inputData =getScaledMatrixtxt(tempdata);
+                //（归一化之后的数据存到data中）
+                int[] tempdata2 = Constents.datalist;
+                double[] data = new double[Constents.dataLength];
+                for(int i=0;i<Constents.dataLength;i++){
+                    data[i] = (tempdata2[i]*1.0)/32767.0d;
+                }
+
+                long start = System.currentTimeMillis();
+                PyObject obj2 = py.getModule("workFlow").callAttr("preprocessing_realtime",new Kwarg("wav_data",data));
+                float[] bgrdata = obj2.toJava(float[].class);
+
+
+                ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
+                imgData.order(ByteOrder.nativeOrder());
+                for(float bgr:bgrdata){
+                    imgData.putFloat(bgr);
+                }
+                long stop = System.currentTimeMillis();
+                long time2 = stop - start;
+                Log.d(TAG,"python time used:"+time2);
                 try {
-                    float[][] labelProbArray = new float[1][30];
-                    long start = System.currentTimeMillis();
+
+                    float[][] labelProbArray2 = new float[1][30];
+                    start = System.currentTimeMillis();
                     // get predict result
-                    // multiple input
-//                    Object[] input = {inputData,inputData,inputData};
-//                    Map<Integer, Object> outputs = new HashMap();
-//                    outputs.put(0, labelProbArray);
-//                    tflite.runForMultipleInputsOutputs(input, outputs);
-                    // single input
-                    tflite.run(inputData, labelProbArray);
+                    tflite.run(imgData, labelProbArray2);
                     long end = System.currentTimeMillis();
-                    time = end - start;
+                    long time = end - start;
 
-                    float[] resluts = new float[labelProbArray[0].length];
-                    System.arraycopy(labelProbArray[0], 0, resluts, 0, labelProbArray[0].length);
+                    float[] resluts2 = new float[labelProbArray2[0].length];
+                    System.arraycopy(labelProbArray2[0], 0, resluts2, 0, labelProbArray2[0].length);
                     //                  add code 8.14
-                    float[] new_resluts= new float[10];
+                    float[] new_resluts2= new float[30];
                     for(int i=0;i<10;i++){
-                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
+                        new_resluts2[i] = resluts2[i*3] + resluts2[i*3+1] + resluts2[i*3+2];
                     }
-//                   add code 8.14
+        //                   add code 8.14
                     // show predict result and time
-                    int[] r = get_max_result(new_resluts);
-                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +
-                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n" + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+
-                            "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
+                    int[] r2 = get_max_result(new_resluts2);
+                    String show_text2 = "You might write：\n" + resultLabel.get(r2[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[0]]*100+"%\n"+ resultLabel.get(r2[1]) +
+                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[1]]*100+"%\n" + resultLabel.get(r2[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[2]]*100+
+                            "%\n" + resultLabel.get(r2[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[3]]*100+"%\n" + resultLabel.get(r2[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[4]]*100+
                             "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
-//                    callpythonadd();//add code
-                    result_text.setText(show_text);
+        //
+                    result2_text.setText(show_text2);
 
-//                    展示频谱图
-                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
-                    picture1.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-//                monitorBatteryState();
                 break;
             }
         }

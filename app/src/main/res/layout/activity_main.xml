@@ -71,6 +71,13 @@
             android:text="result"
             android:textSize="15sp" />
 
+        <TextView
+            android:id="@+id/result2_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="result"
+            android:textSize="15sp" />
+
         <ImageView
             android:id="@+id/show_image"
             android:layout_width="match_parent"

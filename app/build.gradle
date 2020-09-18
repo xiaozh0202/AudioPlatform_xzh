@@ -9,11 +9,11 @@ android {
         applicationId "com.fruitbasket.audioplatform"
         minSdkVersion 21
         targetSdkVersion 23
-        versionCode 22
-        versionName "1.22"
+        versionCode 26
+        versionName "1.26"
         ndk {
             // 指定abi，如需在模拟器调试，增加",x86"，否则指定"armeabi-v7a"即可
-            abiFilters "armeabi-v7a","x86"
+            abiFilters "armeabi-v7a"
         }
         python {
             // 指定python路径
@@ -22,7 +22,6 @@ android {
             pip{
                 install "opencv-python"
                 install "numpy"
-                install "wave"
                 install "scipy"
                 install "matplotlib"
             }
