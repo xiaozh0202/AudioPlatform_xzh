@@ -64,12 +64,11 @@ final public class MainActivity extends Activity {
 
 
 
-    private Interpreter tflite = null;
-    private boolean load_result = false;
-    private TextView result_text;
-    private TextView result2_text;
-    private ImageView picture1;
-    private List<String> resultLabel = new ArrayList<>();
+//    private Interpreter tflite = null;
+//    private boolean load_result = false;
+//    private TextView result_text;
+//    private ImageView picture1;
+//    private List<String> resultLabel = new ArrayList<>();
 
 
     private int channelOut= Player.CHANNEL_OUT_BOTH;
@@ -82,11 +81,12 @@ final public class MainActivity extends Activity {
     public  int ifreqNum = 1;
     public  int iSimpleHz = 44100;
 
-    private int model_index = 0;
-    private int[] ddims = {1, 3, 56, 56};
-    private static final String[] PADDLE_MODEL = {
-            "model_v48"
-    };
+//    private int model_index = 0;
+//    private int[] ddims = {1, 3, 56, 56};
+//    private static final String[] PADDLE_MODEL = {
+//            "model_v48"
+//    };
+//    private String[] texttype = {"digits","letter"};
 
 
     private Intent intent;
@@ -112,17 +112,16 @@ final public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.activity_main);
-        result_text = (TextView) findViewById(R.id.result_text);
-        result2_text = (TextView) findViewById(R.id.result2_text);
-        picture1 = (ImageView) findViewById(R.id.show_image);
-        readCacheLabelFromLocalFile();
+//        result_text = (TextView) findViewById(R.id.result_text);
+//        picture1 = (ImageView) findViewById(R.id.show_image);
+//        readCacheLabelFromLocalFile();
 //        load_model("model_v33");
         initializeViews();
-        long start1 = System.currentTimeMillis();
-        initPython();
-        long end1 = System.currentTimeMillis();
-        long time = end1 - start1;
-        Log.d(TAG,"time used :"+ time);
+//        long start1 = System.currentTimeMillis();
+//        initPython();
+//        long end1 = System.currentTimeMillis();
+//        long time = end1 - start1;
+//        Log.d(TAG,"time used :"+ time);
         intent=new Intent(this,AudioService.class);
         if(audioService ==null) {
             Log.i(TAG,"begin to bind service");
@@ -132,11 +131,11 @@ final public class MainActivity extends Activity {
     }
 
     // 初始化Python环境
-    void initPython(){
-        if (! Python.isStarted()) {
-            Python.start(new AndroidPlatform(this));
-        }
-    }
+//    void initPython(){
+//        if (! Python.isStarted()) {
+//            Python.start(new AndroidPlatform(this));
+//        }
+//    }
 
     @Override
     protected void onStart(){
@@ -213,45 +212,49 @@ final public class MainActivity extends Activity {
         recorderTB=(ToggleButton)findViewById(R.id.recorder_tb);
         recorderTB.setOnCheckedChangeListener(tcListener);
 
+//code change 2020.9.27
+//        Button load_model = (Button) findViewById(R.id.load_model);
+//        load_model.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                showDialog();
+//            }
+//        });
 
-        Button load_model = (Button) findViewById(R.id.load_model);
-        load_model.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showDialog();
-            }
-        });
+
+
+        //code change 2020.9.27
     }
 
 
-    public void showDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-        // set dialog title
-        builder.setTitle("Please select model");
-
-        // set dialog icon
-        builder.setIcon(android.R.drawable.ic_dialog_alert);
-
-        // able click other will cancel
-        builder.setCancelable(true);
-
-        // cancel button
-        builder.setNegativeButton("cancel", null);
-
-        // set list
-        builder.setSingleChoiceItems(PADDLE_MODEL, model_index, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                model_index = which;
-                load_model(PADDLE_MODEL[model_index]);
-                dialog.dismiss();
-            }
-        });
-
-        // show dialog
-        builder.show();
-    }
+//    public void showDialog() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//
+//        // set dialog title
+//        builder.setTitle("Please select model");
+//
+//        // set dialog icon
+//        builder.setIcon(android.R.drawable.ic_dialog_alert);
+//
+//        // able click other will cancel
+//        builder.setCancelable(true);
+//
+//        // cancel button
+//        builder.setNegativeButton("cancel", null);
+//
+//        // set list
+//        builder.setSingleChoiceItems(PADDLE_MODEL, model_index, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                model_index = which;
+//                load_model(PADDLE_MODEL[model_index]);
+//                dialog.dismiss();
+//            }
+//        });
+//
+//        // show dialog
+//        builder.show();
+//    }
 
 
     private class ToggleCheckedChangeListener implements CompoundButton.OnCheckedChangeListener{
@@ -330,7 +333,14 @@ final public class MainActivity extends Activity {
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-                PredictWav(Constents.file_path);
+                File f = new File(Constents.file_path);
+                while (true) {
+                    if (f.exists()) {
+                        Toast.makeText(MainActivity.this, Constents.file_path + " make success", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                }
+//                PredictWav(Constents.file_path);
 //            added code6.11
             }
             else{
@@ -365,172 +375,158 @@ final public class MainActivity extends Activity {
     /**
      * Memory-map the model file in Assets.
      */
-    private MappedByteBuffer loadModelFile(String model) throws IOException {
-        AssetFileDescriptor fileDescriptor = getApplicationContext().getAssets().openFd(model + ".tflite");
-        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
+//    private MappedByteBuffer loadModelFile(String model) throws IOException {
+//        AssetFileDescriptor fileDescriptor = getApplicationContext().getAssets().openFd(model + ".tflite");
+//        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+//        FileChannel fileChannel = inputStream.getChannel();
+//        long startOffset = fileDescriptor.getStartOffset();
+//        long declaredLength = fileDescriptor.getDeclaredLength();
+//        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+//    }
 
     // load infer model
-    private void load_model(String model) {
-        try {
-            tflite = new Interpreter(loadModelFile(model).asReadOnlyBuffer());
-            Toast.makeText(MainActivity.this, model + " model load success", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, model + " model load success");
-//            tflite.setNumThreads(4);
-            load_result = true;
-        } catch (IOException e) {
-            Toast.makeText(MainActivity.this, model + " model load fail", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, model + " model load fail");
-            load_result = false;
-            e.printStackTrace();
-        }
-    }
+//    private void load_model(String model) {
+//        try {
+//            tflite = new Interpreter(loadModelFile(model).asReadOnlyBuffer());
+//            Toast.makeText(MainActivity.this, model + " model load success", Toast.LENGTH_SHORT).show();
+//            Log.d(TAG, model + " model load success");
+////            tflite.setNumThreads(4);
+//            load_result = true;
+//        } catch (IOException e) {
+//            Toast.makeText(MainActivity.this, model + " model load fail", Toast.LENGTH_SHORT).show();
+//            Log.d(TAG, model + " model load fail");
+//            load_result = false;
+//            e.printStackTrace();
+//        }
+//    }
 
 
-    public static ByteBuffer getScaledMatrix(Bitmap bitmap, int[] ddims) {
-        ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
-        imgData.order(ByteOrder.nativeOrder());
-        // get image pixel
-        int[] pixels = new int[ddims[2] * ddims[3]];
-        Bitmap bm = Bitmap.createScaledBitmap(bitmap, ddims[2], ddims[3], false);
-        bm.getPixels(pixels, 0, bm.getWidth(), 0, 0, ddims[2], ddims[3]);
-        int pixel = 0;
-//        Log.i(TAG,"first pixel is :" +pixels[0]);
-        for (int i = 0; i < ddims[2]; ++i) {
-            for (int j = 0; j < ddims[3]; ++j) {
-                final int val = pixels[pixel++];
-                imgData.putFloat(((val & 0x000000ff) )/255f);
-                imgData.putFloat(((val & 0x0000ff00)>>8 )/255f);
-                imgData.putFloat(((val & 0x00ff0000) >>16)/255f);
-//                Log.i(TAG,"rgb:" +((val & 0x000000ff) )/255f+ " ,"+ ((val & 0x0000ff00)>>8 )/255f + " ," + ((val & 0x00ff0000) >>16)/255f);
-            }
-        }
-
-        if (bm.isRecycled()) {
-            bm.recycle();
-        }
-        return imgData;
-    }
-
-    // compress picture
-    public static Bitmap getScaleBitmap(String filePath) {
-        BitmapFactory.Options opt = new BitmapFactory.Options();
-        opt.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(filePath, opt);
-
-        int bmpWidth = opt.outWidth;
-        int bmpHeight = opt.outHeight;
-        int maxSize = 500;
-        // compress picture with inSampleSize
-        opt.inSampleSize = 1;
-        while (true) {
-            if (bmpWidth / opt.inSampleSize < maxSize || bmpHeight / opt.inSampleSize < maxSize) {
-                break;
-            }
-            opt.inSampleSize += 2;
-        }
-        opt.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(filePath, opt);
-    }
+//    public static ByteBuffer getScaledMatrix(Bitmap bitmap, int[] ddims) {
+//        ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
+//        imgData.order(ByteOrder.nativeOrder());
+//        // get image pixel
+//        int[] pixels = new int[ddims[2] * ddims[3]];
+//        Bitmap bm = Bitmap.createScaledBitmap(bitmap, ddims[2], ddims[3], false);
+//        bm.getPixels(pixels, 0, bm.getWidth(), 0, 0, ddims[2], ddims[3]);
+//        int pixel = 0;
+////        Log.i(TAG,"first pixel is :" +pixels[0]);
+//        for (int i = 0; i < ddims[2]; ++i) {
+//            for (int j = 0; j < ddims[3]; ++j) {
+//                final int val = pixels[pixel++];
+//                imgData.putFloat(((val & 0x000000ff) )/255f);
+//                imgData.putFloat(((val & 0x0000ff00)>>8 )/255f);
+//                imgData.putFloat(((val & 0x00ff0000) >>16)/255f);
+////                Log.i(TAG,"rgb:" +((val & 0x000000ff) )/255f+ " ,"+ ((val & 0x0000ff00)>>8 )/255f + " ," + ((val & 0x00ff0000) >>16)/255f);
+//            }
+//        }
+//
+//        if (bm.isRecycled()) {
+//            bm.recycle();
+//        }
+//        return imgData;
+//    }
+//
+//    // compress picture
+//    public static Bitmap getScaleBitmap(String filePath) {
+//        BitmapFactory.Options opt = new BitmapFactory.Options();
+//        opt.inJustDecodeBounds = true;
+//        BitmapFactory.decodeFile(filePath, opt);
+//
+//        int bmpWidth = opt.outWidth;
+//        int bmpHeight = opt.outHeight;
+//        int maxSize = 500;
+//        // compress picture with inSampleSize
+//        opt.inSampleSize = 1;
+//        while (true) {
+//            if (bmpWidth / opt.inSampleSize < maxSize || bmpHeight / opt.inSampleSize < maxSize) {
+//                break;
+//            }
+//            opt.inSampleSize += 2;
+//        }
+//        opt.inJustDecodeBounds = false;
+//        return BitmapFactory.decodeFile(filePath, opt);
+//    }
 
 
     // get max probability label
     // predict image
-    private int[] get_max_result(float[] result) {
-        float[] temp = new float[result.length];
-        System.arraycopy(result, 0, temp, 0, result.length);
-        Arrays.sort(temp);
-        int[] top_five = new int[5];
-        for(int i=0;i<5;i++){
-            float max = temp[result.length-i-1];
-            for(int j=0;j<result.length;j++){
-                if (result[j]==max){
-                    top_five[i] = j;
-                }
-            }
-        }
-        return top_five;
-    }
+//    private int[] get_max_result(float[] result) {
+//        float[] temp = new float[result.length];
+//        System.arraycopy(result, 0, temp, 0, result.length);
+//        Arrays.sort(temp);
+//        int[] top_five = new int[5];
+//        for(int i=0;i<5;i++){
+//            float max = temp[result.length-i-1];
+//            for(int j=0;j<result.length;j++){
+//                if (result[j]==max){
+//                    top_five[i] = j;
+//                }
+//            }
+//        }
+//        return top_five;
+//    }
 
-    private void readCacheLabelFromLocalFile() {
-        try {
-            AssetManager assetManager = getApplicationContext().getAssets();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open("30labels.txt")));
-            String readLine = null;
-            while ((readLine = reader.readLine()) != null) {
-                resultLabel.add(readLine);
-            }
-            reader.close();
-        } catch (Exception e) {
-            Log.e("labelCache", "error " + e);
-        }
-    }
+//    private void readCacheLabelFromLocalFile() {
+//        try {
+//            AssetManager assetManager = getApplicationContext().getAssets();
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open("30labels.txt")));
+//            String readLine = null;
+//            while ((readLine = reader.readLine()) != null) {
+//                resultLabel.add(readLine);
+//            }
+//            reader.close();
+//        } catch (Exception e) {
+//            Log.e("labelCache", "error " + e);
+//        }
+//    }
 
 //333行进行了调用
-    private void PredictWav(String path) throws FileNotFoundException {
-        File f = new File(path);
-        while (true){
-            if(f.exists()){
-                Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
-                Python py = Python.getInstance();
-
-                //（归一化之后的数据存到data中）
-                int[] tempdata2 = Constents.datalist;
-                double[] data = new double[Constents.dataLength];
-                for(int i=0;i<Constents.dataLength;i++){
-                    data[i] = (tempdata2[i]*1.0)/32767.0d;
-                }
-
-                long start = System.currentTimeMillis();
-                PyObject obj2 = py.getModule("workFlow").callAttr("preprocessing_realtime",new Kwarg("wav_data",data));
-                float[] bgrdata = obj2.toJava(float[].class);
-
-
-                ByteBuffer imgData = ByteBuffer.allocateDirect(ddims[0] * ddims[1] * ddims[2] * ddims[3] * 4);
-                imgData.order(ByteOrder.nativeOrder());
-                for(float bgr:bgrdata){
-                    imgData.putFloat(bgr);
-                }
-                long stop = System.currentTimeMillis();
-                long time2 = stop - start;
-                Log.d(TAG,"python time used:"+time2);
-                try {
-
-                    float[][] labelProbArray2 = new float[1][30];
-                    start = System.currentTimeMillis();
-                    // get predict result
-                    tflite.run(imgData, labelProbArray2);
-                    long end = System.currentTimeMillis();
-                    long time = end - start;
-
-                    float[] resluts2 = new float[labelProbArray2[0].length];
-                    System.arraycopy(labelProbArray2[0], 0, resluts2, 0, labelProbArray2[0].length);
-                    //                  add code 8.14
-                    float[] new_resluts2= new float[30];
-                    for(int i=0;i<10;i++){
-                        new_resluts2[i] = resluts2[i*3] + resluts2[i*3+1] + resluts2[i*3+2];
-                    }
-        //                   add code 8.14
-                    // show predict result and time
-                    int[] r2 = get_max_result(new_resluts2);
-                    String show_text2 = "You might write：\n" + resultLabel.get(r2[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[0]]*100+"%\n"+ resultLabel.get(r2[1]) +
-                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[1]]*100+"%\n" + resultLabel.get(r2[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[2]]*100+
-                            "%\n" + resultLabel.get(r2[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[3]]*100+"%\n" + resultLabel.get(r2[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts2[r2[4]]*100+
-                            "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
-        //
-                    result2_text.setText(show_text2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
-        }
-    }
+//    private void PredictWav(String path) throws FileNotFoundException {
+//        File f = new File(path);
+//        while (true){
+//            if(f.exists()){
+//                Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
+//
+//                Bitmap bmp = getScaleBitmap(Constents.file_path);
+//                ByteBuffer inputData = getScaledMatrix(bmp, ddims);
+//
+//                try {
+//                    float[][] labelProbArray = new float[1][30];
+//                    long start = System.currentTimeMillis();
+//                    // get predict result
+//                    tflite.run(inputData, labelProbArray);
+//                    long end = System.currentTimeMillis();
+//                    long time = end - start;
+//
+//                    float[] resluts = new float[labelProbArray[0].length];
+//                    System.arraycopy(labelProbArray[0], 0, resluts, 0, labelProbArray[0].length);
+//                    //                  add code 8.14
+//                    float[] new_resluts= new float[10];
+//                    for(int i=0;i<10;i++){
+//                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
+//                    }
+////                   add code 8.14
+//                    // show predict result and time
+//                    int[] r = get_max_result(new_resluts);
+//                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +
+//                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n" + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+
+//                            "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
+//                            "%\nPredict Used:"+time + "ms\n\nText Type\t"+texttype[Constents.texttype];
+////                    callpythonadd();//add code
+//                    result_text.setText(show_text);
+//
+////                    展示频谱图
+//                    Bitmap bitmap = BitmapFactory.decodeFile(Constents.file_path);
+//                    picture1.setImageBitmap(bitmap);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//
+//                break;
+//            }
+//        }
+//    }
 
 //    added code6.10
 }

@@ -1,6 +1,6 @@
 
-def preprocessing_realtime(wav_data):
-    import io
+def preprocessing_realtime(wav_data,pic_path):
+    # import io
     import numpy as np
     import scipy.signal as sig
     import matplotlib.pyplot as plt
@@ -40,29 +40,31 @@ def preprocessing_realtime(wav_data):
     plt.subplots_adjust(top=1 ,bottom=0 ,left=0 ,right=1 ,hspace=0 ,wspace=0)
     plt.margins(0 ,0)
     plt.gcf().set_size_inches(56 / 96, 56 / 96)
-    # plt.savefig("./testplt.png", dpi=96)
-    buffer = io.BytesIO()
-    fig.dpi = 96  # key code!!!
-    canvas = fig.canvas
-    canvas.print_png(buffer)
+    plt.savefig(pic_path, dpi=96)
+    # buffer = io.BytesIO()
+    # fig.dpi = 96  # key code!!!
+    # canvas = fig.canvas
+    # canvas.print_png(buffer)
 
     # plt.close(fig)
     # img=Image.open(buffer)
     # img=np.asarray(img)
     # buffer.close()
     # data = img[: ,: ,[0,1,2]] / 255
-    import cv2
-    buffer.seek(0)
-    img = cv2.imdecode(np.asarray(bytearray(buffer.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    buffer.close()
-    data = img[: ,: ,[2,1,0]] / 255
-    result = []
-    for i in data:
-        for j in i:
-            for k in j:
-                result.append(k)
-    return result
+
+
+    # import cv2
+    # buffer.seek(0)
+    # img = cv2.imdecode(np.asarray(bytearray(buffer.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # buffer.close()
+    # data = img[: ,: ,[2,1,0]] / 255
+    # result = []
+    # for i in data:
+    #     for j in i:
+    #         for k in j:
+    #             result.append(k)
+    # return result
 
 
 

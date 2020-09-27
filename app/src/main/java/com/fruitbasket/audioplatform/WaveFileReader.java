@@ -9,31 +9,31 @@ public class WaveFileReader {
     private double[][] data = null;
     private int len = 0;
     private String chunkdescriptor = null;
-    static private int lenchunkdescriptor = 4;
+//    static private int lenchunkdescriptor = 4;
     private long chunksize = 0;
-    static private int lenchunksize = 4;
+//    static private int lenchunksize = 4;
     private String waveflag = null;
-    static private int lenwaveflag = 4;
+//    static private int lenwaveflag = 4;
     private String fmtubchunk = null;
-    static private int lenfmtubchunk = 4;
+//    static private int lenfmtubchunk = 4;
     private long subchunk1size = 0;
-    static private int lensubchunk1size = 4;
+//    static private int lensubchunk1size = 4;
     private int audioformat = 0;
-    static private int lenaudioformat = 2;
+//    static private int lenaudioformat = 2;
     private int numchannels = 0;
-    static private int lennumchannels = 2;
+//    static private int lennumchannels = 2;
     private long samplerate = 0;
-    static private int lensamplerate = 2;
+//    static private int lensamplerate = 2;
     private long byterate = 0;
-    static private int lenbyterate = 4;
+//    static private int lenbyterate = 4;
     private int blockalign = 0;
-    static private int lenblockling = 2;
+//    static private int lenblockling = 2;
     private int bitspersample = 0;
-    static private int lenbitspersample = 2;
+//    static private int lenbitspersample = 2;
     private String datasubchunk = null;
-    static private int lendatasubchunk = 4;
+//    static private int lendatasubchunk = 4;
     private long subchunk2size = 0;
-    static private int lensubchunk2size = 4;
+//    static private int lensubchunk2size = 4;
     private FileInputStream fis = null;
     private BufferedInputStream bis = null;
     private boolean issuccess = false;
@@ -49,9 +49,9 @@ public class WaveFileReader {
         }
 
         // 获取每个采样的编码长度，8bit或者16bit
-        public int getBitPerSample() {
-            return this.bitspersample;
-        }
+//        public int getBitPerSample() {
+//            return this.bitspersample;
+//        }
 
         // 获取采样率
         public long getSampleRate() {
@@ -59,14 +59,14 @@ public class WaveFileReader {
         }
 
         // 获取声道个数，1代表单声道 2代表立体声
-        public int getNumChannels() {
-            return this.numchannels;
-        }
+//        public int getNumChannels() {
+//            return this.numchannels;
+//        }
 
         // 获取数据长度，也就是一共采样多少个
-        public int getDataLen() {
-            return this.len;
-        }
+//        public int getDataLen() {
+//            return this.len;
+//        }
 
         // 获取数据
         // 数据是一个二维数组，[n][m]代表第n个声道的第m个采样值
@@ -179,30 +179,30 @@ public class WaveFileReader {
             return res;
         }
 
-        private byte[] readBytes(int len) {
-            byte[] buf = new byte[len];
-            try {
-                if (bis.read(buf) != len)
-                    throw new IOException("no more data!!!");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return buf;
-        }
+//        private byte[] readBytes(int len) {
+//            byte[] buf = new byte[len];
+//            try {
+//                if (bis.read(buf) != len)
+//                    throw new IOException("no more data!!!");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            return buf;
+//        }
 
-        public static double[] readSingleChannel(String filename) {
-            if (filename == null || filename.length() == 0) {
-                return null;
-            }
-            try {
-                WaveFileReader reader = new WaveFileReader(filename);
-                double[] res = reader.getData()[0];
-                return res;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
+//        public static double[] readSingleChannel(String filename) {
+//            if (filename == null || filename.length() == 0) {
+//                return null;
+//            }
+//            try {
+//                WaveFileReader reader = new WaveFileReader(filename);
+//                double[] res = reader.getData()[0];
+//                return res;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            return null;
+//        }
 
         public static void main(String[] args) {
         }

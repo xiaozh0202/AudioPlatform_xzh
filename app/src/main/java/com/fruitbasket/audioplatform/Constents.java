@@ -9,4 +9,5 @@ public class Constents {
     public static long makewavfiletime = 0;
     public static int[] datalist = null;
     public static int dataLength = 0;
+    public static int texttype = 0;
 }

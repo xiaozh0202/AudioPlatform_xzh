@@ -30,13 +30,13 @@
             <!--android:layout_height="wrap_content"-->
             <!--android:layout_gravity="center_horizontal"/>-->
 
-        <Button
-            android:id="@+id/load_model"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal|center"
-            android:layout_weight="1"
-            android:text="@string/loadmodel" />
+        <!--<Button-->
+            <!--android:id="@+id/load_model"-->
+            <!--android:layout_width="120dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_gravity="center_vertical|center_horizontal|center"-->
+            <!--android:layout_weight="1"-->
+            <!--android:text="@string/loadmodel" />-->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -64,26 +64,19 @@
         </LinearLayout>
 
 
-        <TextView
-            android:id="@+id/result_text"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="result"
-            android:textSize="15sp" />
+        <!--<TextView-->
+            <!--android:id="@+id/result_text"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:text="result"-->
+            <!--android:textSize="15sp" />-->
 
-        <TextView
-            android:id="@+id/result2_text"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="result"
-            android:textSize="15sp" />
-
-        <ImageView
-            android:id="@+id/show_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@id/result_text"
-            android:layout_alignParentTop="true" />
+        <!--<ImageView-->
+            <!--android:id="@+id/show_image"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_above="@id/result_text"-->
+            <!--android:layout_alignParentTop="true" />-->
 
         <!--<TextView-->
             <!--android:id="@+id/batteryLevel"-->
