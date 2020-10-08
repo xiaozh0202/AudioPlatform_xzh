@@ -7,27 +7,22 @@ def read_wav(file_path):
     file_path: wav文件路径
     return: wav_data
     """
-    wave_read = wave.open(file_path, "rb")
-    params = wave_read.getparams()
-    nchannels, sampwidth, framerate, nframes = params[:4]
-    str_data = wave_read.readframes(nframes)
-    wave_read.close()
-    wave_data = np.fromstring(str_data, dtype=np.short)
-    wave_data.shape = -1, 1
-    wave_data = wave_data.T
-    return wave_data / 32767, framerate
+    # wave_read = wave.open(file_path, "rb")
+    # params = wave_read.getparams()
+    # nchannels, sampwidth, framerate, nframes = params[:4]
+    # str_data = wave_read.readframes(nframes)
+    # wave_read.close()
+    # wave_data = np.fromstring(str_data, dtype=np.short)
+    # wave_data.shape = -1, 1
+    # wave_data = wave_data.T
+    # return wave_data / 32767, framerate
+    from pydub import AudioSegment
+    import numpy as np
+    voice_data = AudioSegment.from_file(file=file_path,sample_width=2,frame_rate=44100,channels=1)
+    pcm_data = np.array(voice_data.get_array_of_samples())
+    return pcm_data/32767,44100
 
-def read_wav_scipy(wav_path):
-    from scipy.io import wavfile as wav
-    fs, signal = wav.read(wav_path)
-    return signal / 32767, fs
 
-def read_wav_len(wav_path):
-    wave_read = wave.open(wav_path, "rb")
-    params = wave_read.getparams()
-    nchannels, sampwidth, framerate, nframes = params[:4]
-    wave_read.close()
-    return framerate * nframes
 
 
 
@@ -35,7 +30,7 @@ import numpy as np
 import scipy.signal as sig
 def preprocessing(wav_path):
     wav_data, sample_rate = read_wav(wav_path)
-    wav_data = wav_data[0]
+    # wav_data = wav_data[0]
 
     # bandpass filter
     [b, a] = sig.butter(6, [18700/44100*2,19300/44100*2],'bandpass')

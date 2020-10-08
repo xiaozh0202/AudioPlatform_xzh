@@ -25,18 +25,18 @@
 
 
         <!--<TextView-->
-            <!--android:id="@+id/waverate_tv"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="center_horizontal"/>-->
+        <!--android:id="@+id/waverate_tv"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="center_horizontal"/>-->
 
-        <!--<Button-->
-            <!--android:id="@+id/load_model"-->
-            <!--android:layout_width="120dp"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="center_vertical|center_horizontal|center"-->
-            <!--android:layout_weight="1"-->
-            <!--android:text="@string/loadmodel" />-->
+        <Button
+            android:id="@+id/load_model"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal|center"
+            android:layout_weight="1"
+            android:text="@string/loadmodel" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,27 +63,31 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
+        <EditText
+            android:id="@+id/user_path"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="请输入要保存的路径"
+            android:gravity="top" />
 
-        <!--<TextView-->
-            <!--android:id="@+id/result_text"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:text="result"-->
-            <!--android:textSize="15sp" />-->
 
-        <!--<ImageView-->
-            <!--android:id="@+id/show_image"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_above="@id/result_text"-->
-            <!--android:layout_alignParentTop="true" />-->
 
-        <!--<TextView-->
-            <!--android:id="@+id/batteryLevel"-->
-            <!--android:layout_width="371dp"-->
-            <!--android:layout_height="117dp"-->
-            <!--android:text="Hello World!"-->
-            <!--android:textSize="20sp" />-->
+        <TextView
+            android:id="@+id/result_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="result"
+            android:textSize="15sp" />
+
+        <ImageView
+            android:id="@+id/show_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/result_text"
+            android:layout_alignParentTop="true" />
+
+
 
     </LinearLayout>
 

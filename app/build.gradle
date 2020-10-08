@@ -24,6 +24,7 @@ android {
                 install "numpy"
                 install "scipy"
                 install "matplotlib"
+                install "pydub"
             }
 
         }
