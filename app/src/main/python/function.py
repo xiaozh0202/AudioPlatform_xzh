@@ -30,6 +30,8 @@ import numpy as np
 import scipy.signal as sig
 def preprocessing(wav_path):
     wav_data, sample_rate = read_wav(wav_path)
+    print(np.shape(wav_data))
+    print(wav_data)
     # wav_data = wav_data[0]
 
     # bandpass filter

@@ -13,7 +13,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioFormat;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -72,10 +74,15 @@ final public class MainActivity extends Activity {
     private EditText path_box;
     private List<String> resultLabel = new ArrayList<>();
 
-
+    //add 10.15
+    public boolean ispredicting;
+    PredictHandler1 predictHandler1=new PredictHandler1();
+    PredictHandler2 predictHandler2=new PredictHandler2();
+    PredictHandler3 predictHandler3=new PredictHandler3();
+    //add 10.15
     private int channelOut= Player.CHANNEL_OUT_BOTH;
     private int channelIn= AudioFormat.CHANNEL_IN_MONO;
-//    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
+    //    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
     private int waveRate;//声波的频率
 
     public  int iBeginHz = 19000;
@@ -318,6 +325,9 @@ final public class MainActivity extends Activity {
 
         private void startRecordWav(){
             Log.i(TAG,"startRecordWav()");
+            // add 10.14
+            GetPredictPath();
+            //add 10.14
             if(audioService!=null){
                 audioService.startRecordWav(
                         channelIn,
@@ -333,11 +343,16 @@ final public class MainActivity extends Activity {
 
         private void stopRecord() throws FileNotFoundException {
             Log.i(TAG,"stopRecord()");
+            //add 10.14
+            ispredicting=false;
+            //add 10.14
             if(audioService!=null){
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-                PredictWav(Constents.file_path);
+                //delete 10.14
+//                PredictWav(Constents.file_path);
+                //delete 10.14
 //            added code6.11
             }
             else{
@@ -346,25 +361,29 @@ final public class MainActivity extends Activity {
 
         }
 
-        private void startTest(){
-            Log.i(TAG,"startTest()");
-            if(audioService!=null){
-                audioService.startRecordTest();
-            }
-            else{
-                Log.w(TAG,"audioService==null");
-            }
-        }
 
-        private void stopTest(){
-            Log.i(TAG,"stopTest()");
-            if(audioService!=null){
-                audioService.stopRecord();
-            }
-            else{
-                Log.w(TAG,"audioService==null");
-            }
+        //add 10.14
+        public void GetPredictPath()
+        {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    ispredicting=true;
+                    while(ispredicting)
+                    {
+                        String current_path=Constents.pathqueue.poll();
+                        if(current_path!=null)
+                        {
+                            System.out.println("mainactivity:"+current_path);
+                            PredictWav(current_path);
+                        }
+
+                    }
+                }
+            }).start();
         }
+        //add 10.14
+
     }
 
 
@@ -422,7 +441,7 @@ final public class MainActivity extends Activity {
         }
         return imgData;
     }
-//
+    //
 //    // compress picture
     public static Bitmap getScaleBitmap(String filePath) {
         BitmapFactory.Options opt = new BitmapFactory.Options();
@@ -477,12 +496,51 @@ final public class MainActivity extends Activity {
         }
     }
 
+    //add 10.15
+    public class PredictHandler1 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                String res = (String) msg.obj;
+                Toast.makeText(getApplicationContext(), res, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    public class PredictHandler2 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                String res = (String) msg.obj;
+                result_text.setText(res);
+            }
+        }
+    }
+
+    public class PredictHandler3 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                Bitmap bitmap = (Bitmap) msg.obj;
+                picture1.setImageBitmap(bitmap);
+            }
+        }
+    }
+    //add 10.15
+
 
     private void PredictWav(String path){
         File f = new File(path);
         while (true){
             if(f.exists()){
-                Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
+                //change 10.15
+                String str=path + " make success";
+                Message message1=new Message();
+                message1.what=100;
+                message1.obj=str;
+                predictHandler1.sendMessage(message1);
+                //change 10.15
+
                 long start1 = System.currentTimeMillis();
                 Python py = Python.getInstance();
                 String pic_path = path.substring(0,path.length()-4)+ ".png";
@@ -521,11 +579,26 @@ final public class MainActivity extends Activity {
                             "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
                             "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
 //                    callpythonadd();//add code
-                    result_text.setText(show_text);
-
+//                    result_text.setText(show_text);
+//                    Log.i(TAG,show_text);
+                    //add 10.15
+                    Message message2=new Message();
+                    message2.what=100;
+                    message2.obj=show_text;
+                    predictHandler2.sendMessage(message2);
+                    //add 10.15
 //                    展示频谱图
+                    //change 10.15
                     Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
-                    picture1.setImageBitmap(bitmap);
+//                    picture1.setImageBitmap(bitmap);
+                    //change 10.15
+
+                    //add 10.15
+                    Message message3=new Message();
+                    message3.what=100;
+                    message3.obj=bitmap;
+                    predictHandler3.sendMessage(message3);
+                    //add 10.15
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
