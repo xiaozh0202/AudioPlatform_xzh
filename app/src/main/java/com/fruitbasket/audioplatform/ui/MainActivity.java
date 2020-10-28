@@ -13,9 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioFormat;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -74,12 +72,7 @@ final public class MainActivity extends Activity {
     private EditText path_box;
     private List<String> resultLabel = new ArrayList<>();
 
-    //add 10.15
-    public boolean ispredicting;
-    PredictHandler1 predictHandler1=new PredictHandler1();
-    PredictHandler2 predictHandler2=new PredictHandler2();
-    PredictHandler3 predictHandler3=new PredictHandler3();
-    //add 10.15
+
     private int channelOut= Player.CHANNEL_OUT_BOTH;
     private int channelIn= AudioFormat.CHANNEL_IN_MONO;
     //    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
@@ -93,11 +86,13 @@ final public class MainActivity extends Activity {
     private int model_index = 0;
     private int[] ddims = {1, 3, 56, 56};
     private static final String[] PADDLE_MODEL = {
-            "model_v67","model_v48"
+//            "model_v79","model_v80",
+            "model_v48"
     };
     private String[] texttype = {"digits","letter"};
 
-
+    private Python py;
+    private PyObject obj1;
     private Intent intent;
     private AudioService audioService;
     private ServiceConnection serviceConnection=new ServiceConnection(){
@@ -127,8 +122,10 @@ final public class MainActivity extends Activity {
         readCacheLabelFromLocalFile();
 //        load_model("model_v33");
         initializeViews();
+
         long start1 = System.currentTimeMillis();
         initPython();
+        this.obj1 = this.py.getModule("function");
         long end1 = System.currentTimeMillis();
         long time = end1 - start1;
         Log.d(TAG,"time used :"+ time);
@@ -145,6 +142,7 @@ final public class MainActivity extends Activity {
         if (! Python.isStarted()) {
             Python.start(new AndroidPlatform(this));
         }
+        this.py = Python.getInstance();
     }
 
     @Override
@@ -325,9 +323,6 @@ final public class MainActivity extends Activity {
 
         private void startRecordWav(){
             Log.i(TAG,"startRecordWav()");
-            // add 10.14
-            GetPredictPath();
-            //add 10.14
             if(audioService!=null){
                 audioService.startRecordWav(
                         channelIn,
@@ -343,16 +338,11 @@ final public class MainActivity extends Activity {
 
         private void stopRecord() throws FileNotFoundException {
             Log.i(TAG,"stopRecord()");
-            //add 10.14
-            ispredicting=false;
-            //add 10.14
             if(audioService!=null){
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-                //delete 10.14
-//                PredictWav(Constents.file_path);
-                //delete 10.14
+                PredictWav(Constents.file_path);
 //            added code6.11
             }
             else{
@@ -361,29 +351,25 @@ final public class MainActivity extends Activity {
 
         }
 
-
-        //add 10.14
-        public void GetPredictPath()
-        {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    ispredicting=true;
-                    while(ispredicting)
-                    {
-                        String current_path=Constents.pathqueue.poll();
-                        if(current_path!=null)
-                        {
-                            System.out.println("mainactivity:"+current_path);
-                            PredictWav(current_path);
-                        }
-
-                    }
-                }
-            }).start();
+        private void startTest(){
+            Log.i(TAG,"startTest()");
+            if(audioService!=null){
+                audioService.startRecordTest();
+            }
+            else{
+                Log.w(TAG,"audioService==null");
+            }
         }
-        //add 10.14
 
+        private void stopTest(){
+            Log.i(TAG,"stopTest()");
+            if(audioService!=null){
+                audioService.stopRecord();
+            }
+            else{
+                Log.w(TAG,"audioService==null");
+            }
+        }
     }
 
 
@@ -496,62 +482,24 @@ final public class MainActivity extends Activity {
         }
     }
 
-    //add 10.15
-    public class PredictHandler1 extends Handler{
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == 100) {
-                String res = (String) msg.obj;
-                Toast.makeText(getApplicationContext(), res, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    public class PredictHandler2 extends Handler{
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == 100) {
-                String res = (String) msg.obj;
-                result_text.setText(res);
-            }
-        }
-    }
-
-    public class PredictHandler3 extends Handler{
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == 100) {
-                Bitmap bitmap = (Bitmap) msg.obj;
-                picture1.setImageBitmap(bitmap);
-            }
-        }
-    }
-    //add 10.15
-
 
     private void PredictWav(String path){
         File f = new File(path);
         while (true){
             if(f.exists()){
-                //change 10.15
-                String str=path + " make success";
-                Message message1=new Message();
-                message1.what=100;
-                message1.obj=str;
-                predictHandler1.sendMessage(message1);
-                //change 10.15
-
+                Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
                 long start1 = System.currentTimeMillis();
-                Python py = Python.getInstance();
+
                 String pic_path = path.substring(0,path.length()-4)+ ".png";
-                PyObject obj1 = py.getModule("function").callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
+                this.obj1.callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
+//                obj1.close();
                 long end1 = System.currentTimeMillis();
                 long time = end1 - start1;
                 Log.i(TAG,"python plot fft picture time used :" +time);
                 Bitmap bmp = getScaleBitmap(pic_path);
                 ByteBuffer inputData = getScaledMatrix(bmp, ddims);
                 try {
-                    float[][] labelProbArray = new float[1][30];
+                    float[][] labelProbArray = new float[1][10*3];
                     long start = System.currentTimeMillis();
                     // get predict result
                     // multiple input
@@ -564,13 +512,16 @@ final public class MainActivity extends Activity {
                     long end = System.currentTimeMillis();
                     time = end - start;
 
-                    float[] resluts = new float[labelProbArray[0].length];
-                    System.arraycopy(labelProbArray[0], 0, resluts, 0, labelProbArray[0].length);
+                    float[] new_resluts = new float[labelProbArray[0].length];
+//                    System.arraycopy(labelProbArray[0], 0, new_resluts, 0, labelProbArray[0].length);
                     //                  add code 8.14
-                    float[] new_resluts= new float[10];
+//                    float[] new_resluts= new float[14];
                     for(int i=0;i<10;i++){
-                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
+//                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
+
+                        new_resluts[i] = labelProbArray[0][i*3] + labelProbArray[0][i*3+1] + labelProbArray[0][i*3+2];
                     }
+
 //                   add code 8.14
                     // show predict result and time
                     int[] r = get_max_result(new_resluts);
@@ -579,26 +530,11 @@ final public class MainActivity extends Activity {
                             "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
                             "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
 //                    callpythonadd();//add code
-//                    result_text.setText(show_text);
-//                    Log.i(TAG,show_text);
-                    //add 10.15
-                    Message message2=new Message();
-                    message2.what=100;
-                    message2.obj=show_text;
-                    predictHandler2.sendMessage(message2);
-                    //add 10.15
-//                    展示频谱图
-                    //change 10.15
-                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
-//                    picture1.setImageBitmap(bitmap);
-                    //change 10.15
+                    result_text.setText(show_text);
 
-                    //add 10.15
-                    Message message3=new Message();
-                    message3.what=100;
-                    message3.obj=bitmap;
-                    predictHandler3.sendMessage(message3);
-                    //add 10.15
+//                    展示频谱图
+                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
+                    picture1.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
