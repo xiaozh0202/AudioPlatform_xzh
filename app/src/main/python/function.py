@@ -1,21 +1,5 @@
-import wave # read_wav方法使用
-
 
 def read_wav(file_path):
-    """
-    从路径file_path，读取并返回wav数据
-    file_path: wav文件路径
-    return: wav_data
-    """
-    # wave_read = wave.open(file_path, "rb")
-    # params = wave_read.getparams()
-    # nchannels, sampwidth, framerate, nframes = params[:4]
-    # str_data = wave_read.readframes(nframes)
-    # wave_read.close()
-    # wave_data = np.fromstring(str_data, dtype=np.short)
-    # wave_data.shape = -1, 1
-    # wave_data = wave_data.T
-    # return wave_data / 32767, framerate
     from pydub import AudioSegment
     import numpy as np
     voice_data = AudioSegment.from_file(file=file_path,sample_width=2,frame_rate=44100,channels=1)
@@ -24,29 +8,17 @@ def read_wav(file_path):
 
 
 
-
-
 import numpy as np
 import scipy.signal as sig
 def preprocessing(wav_path):
     wav_data, sample_rate = read_wav(wav_path)
-    print("preprocessing: ")
-    print(np.shape(wav_data))
-    # print(wav_data)
-    # wav_data = wav_data[0]
-
     nfft = 8192
     overlap = 7168
     step = nfft - overlap
-
     wav_len = len(wav_data)
-
-
     if wav_len < step*12 + nfft:
         wav_data = np.pad(wav_data, (0, step*12 + nfft - wav_len))
 
-    print("preprocessing: ")
-    print(np.shape(wav_data))
 
     # bandpass filter
     [b, a] = sig.butter(6, [18700/44100*2,19300/44100*2],'bandpass')
@@ -61,10 +33,6 @@ def preprocessing(wav_path):
     head_noisenum = step*12 + 1
     BPsignal = BPsignal[head_noisenum:]
 
-    # tail_noisenum = step*5
-    # BPsignal = BPsignal[head_noisenum:-tail_noisenum]
-
-    # [f, t, Zxx] = sig.stft(BPsignal, 44100,window='hamm', nperseg=nfft, noverlap=overlap, detrend=False)
     [f,t, Zxx] = sig.spectrogram(BPsignal, 44100, window="hamm", nperseg=nfft, noverlap=overlap, detrend=False)
 
     BPsignal, wav_data = None, None

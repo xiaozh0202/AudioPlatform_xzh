@@ -13,7 +13,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioFormat;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -62,7 +64,7 @@ final public class MainActivity extends Activity {
     private ToggleButton waveProducerTB;
     private SeekBar waveRateSB;
     private ToggleButton recorderTB;
-
+    private TextView inputOption;
 
 
     private Interpreter tflite = null;
@@ -71,8 +73,14 @@ final public class MainActivity extends Activity {
     private ImageView picture1;
     private EditText path_box;
     private List<String> resultLabel = new ArrayList<>();
-
-
+    private double[][] save_result;
+    private int save_times=0;
+    //add 10.15
+    public boolean ispredicting;
+    PredictHandler1 predictHandler1=new PredictHandler1();
+    PredictHandler2 predictHandler2=new PredictHandler2();
+    PredictHandler3 predictHandler3=new PredictHandler3();
+    //add 10.15
     private int channelOut= Player.CHANNEL_OUT_BOTH;
     private int channelIn= AudioFormat.CHANNEL_IN_MONO;
     //    private int channelIn = AudioFormat.CHANNEL_IN_STEREO;
@@ -82,12 +90,11 @@ final public class MainActivity extends Activity {
     public  int iStepHz=0;
     public  int ifreqNum = 1;
     public  int iSimpleHz = 44100;
-
+    private int current_state;
     private int model_index = 0;
     private int[] ddims = {1, 3, 56, 56};
     private static final String[] PADDLE_MODEL = {
-//            "model_v79","model_v80",
-            "model_v48"
+            "model_v79","model_v48"
     };
     private String[] texttype = {"digits","letter"};
 
@@ -96,7 +103,6 @@ final public class MainActivity extends Activity {
     private Intent intent;
     private AudioService audioService;
     private ServiceConnection serviceConnection=new ServiceConnection(){
-
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             Log.d(TAG,"ServiceConnection.onServiceConnection()");
@@ -119,13 +125,13 @@ final public class MainActivity extends Activity {
         result_text = (TextView) findViewById(R.id.result_text);
         picture1 = (ImageView) findViewById(R.id.show_image);
         path_box = (EditText) findViewById(R.id.user_path);
-        readCacheLabelFromLocalFile();
+        inputOption=(TextView) findViewById(R.id.inputOption);
+        // readCacheLabelFromLocalFile();
 //        load_model("model_v33");
         initializeViews();
-
         long start1 = System.currentTimeMillis();
         initPython();
-        this.obj1 = this.py.getModule("function");
+        this.obj1=this.py.getModule("function");
         long end1 = System.currentTimeMillis();
         long time = end1 - start1;
         Log.d(TAG,"time used :"+ time);
@@ -142,7 +148,7 @@ final public class MainActivity extends Activity {
         if (! Python.isStarted()) {
             Python.start(new AndroidPlatform(this));
         }
-        this.py = Python.getInstance();
+        this.py=Python.getInstance();
     }
 
     @Override
@@ -254,8 +260,13 @@ final public class MainActivity extends Activity {
         builder.setSingleChoiceItems(PADDLE_MODEL, model_index, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                save_times=0;
+                save_result=new double[15][];
                 model_index = which;
+                current_state=which;
+                readCacheLabelFromLocalFile();
                 load_model(PADDLE_MODEL[model_index]);
+
                 dialog.dismiss();
             }
         });
@@ -323,6 +334,9 @@ final public class MainActivity extends Activity {
 
         private void startRecordWav(){
             Log.i(TAG,"startRecordWav()");
+            // add 10.14
+            GetPredictPath();
+            //add 10.14
             if(audioService!=null){
                 audioService.startRecordWav(
                         channelIn,
@@ -338,11 +352,16 @@ final public class MainActivity extends Activity {
 
         private void stopRecord() throws FileNotFoundException {
             Log.i(TAG,"stopRecord()");
+            //add 10.14
+            ispredicting=false;
+            //add 10.14
             if(audioService!=null){
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-                PredictWav(Constents.file_path);
+                //delete 10.14
+//                PredictWav(Constents.file_path);
+                //delete 10.14
 //            added code6.11
             }
             else{
@@ -351,25 +370,42 @@ final public class MainActivity extends Activity {
 
         }
 
-        private void startTest(){
-            Log.i(TAG,"startTest()");
-            if(audioService!=null){
-                audioService.startRecordTest();
-            }
-            else{
-                Log.w(TAG,"audioService==null");
-            }
-        }
 
-        private void stopTest(){
-            Log.i(TAG,"stopTest()");
-            if(audioService!=null){
-                audioService.stopRecord();
-            }
-            else{
-                Log.w(TAG,"audioService==null");
-            }
+        //add 10.14
+        public void GetPredictPath()
+        {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    ispredicting=true;
+                    while(ispredicting)
+                    {
+                        String current_path=Constents.pathqueue.poll();
+                        if(current_path!=null)
+                        {
+                            System.out.println("mainactivity11111:"+current_path);
+                            if(current_state==0) {
+                                double[] A=PredictWav(current_path);
+                                setLanguageResult(A);
+                            }
+                            else{
+                                PredictWav(current_path);
+                                String showOption= "";
+                                Message message2=new Message();
+                                message2.what=200;
+                                message2.obj=showOption;
+                                predictHandler2.sendMessage(message2);
+                            }
+
+
+                        }
+
+                    }
+                }
+            }).start();
         }
+        //add 10.14
+
     }
 
 
@@ -452,13 +488,13 @@ final public class MainActivity extends Activity {
 
     // get max probability label
     // predict image
-    private int[] get_max_result(float[] result) {
-        float[] temp = new float[result.length];
+    private int[] get_max_result(double[] result) {
+        double [] temp = new double[result.length];
         System.arraycopy(result, 0, temp, 0, result.length);
         Arrays.sort(temp);
         int[] top_five = new int[5];
         for(int i=0;i<5;i++){
-            float max = temp[result.length-i-1];
+            double max = temp[result.length-i-1];
             for(int j=0;j<result.length;j++){
                 if (result[j]==max){
                     top_five[i] = j;
@@ -468,10 +504,16 @@ final public class MainActivity extends Activity {
         return top_five;
     }
 
+
+    //change 11.8
     private void readCacheLabelFromLocalFile() {
         try {
+            resultLabel.clear();
             AssetManager assetManager = getApplicationContext().getAssets();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open("30labels.txt")));
+            String labelFileName="26labels.txt";
+            if(current_state==1)
+                labelFileName= "30labels.txt";
+            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open(labelFileName)));
             String readLine = null;
             while ((readLine = reader.readLine()) != null) {
                 resultLabel.add(readLine);
@@ -482,24 +524,76 @@ final public class MainActivity extends Activity {
         }
     }
 
+    //add 10.15
+    public class PredictHandler1 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                String res = (String) msg.obj;
+                Toast.makeText(getApplicationContext(), res, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
-    private void PredictWav(String path){
+    public class PredictHandler2 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                String res = (String) msg.obj;
+                result_text.setText(res);
+            }
+            //add 11.8
+            if(msg.what==200){
+                String res=(String)msg.obj;
+
+                inputOption.setText(res);
+            }
+        }
+    }
+
+    public class PredictHandler3 extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 100) {
+                Bitmap bitmap = (Bitmap) msg.obj;
+                picture1.setImageBitmap(bitmap);
+            }
+        }
+    }
+    //add 10.15
+
+
+    private double[] PredictWav(String path){
         File f = new File(path);
+        int currentsum=10;
+        if(current_state==0)
+            currentsum=26;
+        double[] new_resluts=null;
         while (true){
             if(f.exists()){
-                Toast.makeText(MainActivity.this, path + " make success", Toast.LENGTH_SHORT).show();
+                new_resluts= new double[currentsum];
+                //change 10.15
+                String str=path + " make success";
+                Message message1=new Message();
+                message1.what=100;
+                message1.obj=str;
+                predictHandler1.sendMessage(message1);
+                //change 10.15
                 long start1 = System.currentTimeMillis();
-
                 String pic_path = path.substring(0,path.length()-4)+ ".png";
                 this.obj1.callAttr("wav2picture",new Kwarg("wav_path", path),new Kwarg("pic_path", pic_path));
-//                obj1.close();
                 long end1 = System.currentTimeMillis();
                 long time = end1 - start1;
                 Log.i(TAG,"python plot fft picture time used :" +time);
                 Bitmap bmp = getScaleBitmap(pic_path);
                 ByteBuffer inputData = getScaledMatrix(bmp, ddims);
                 try {
-                    float[][] labelProbArray = new float[1][10*3];
+                    float[][] labelProbArray;
+                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+current_state);
+                    if(current_state==0)
+                        labelProbArray= new float[1][78];
+                    else
+                        labelProbArray=new float[1][30];
                     long start = System.currentTimeMillis();
                     // get predict result
                     // multiple input
@@ -512,35 +606,68 @@ final public class MainActivity extends Activity {
                     long end = System.currentTimeMillis();
                     time = end - start;
 
-                    float[] new_resluts = new float[labelProbArray[0].length];
-//                    System.arraycopy(labelProbArray[0], 0, new_resluts, 0, labelProbArray[0].length);
+                    float[] resluts = new float[labelProbArray[0].length];
+                    System.arraycopy(labelProbArray[0], 0, resluts, 0, labelProbArray[0].length);
                     //                  add code 8.14
-//                    float[] new_resluts= new float[14];
-                    for(int i=0;i<10;i++){
-//                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
-
-                        new_resluts[i] = labelProbArray[0][i*3] + labelProbArray[0][i*3+1] + labelProbArray[0][i*3+2];
+                    for(int i=0;i<currentsum;i++){
+                        new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
                     }
-
 //                   add code 8.14
                     // show predict result and time
                     int[] r = get_max_result(new_resluts);
-                    String show_text = "You might write：\n" + resultLabel.get(r[0]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[0]]*100+"%\n"+ resultLabel.get(r[1]) +
-                            "\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[1]]*100+"%\n" + resultLabel.get(r[2]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[2]]*100+
-                            "%\n" + resultLabel.get(r[3]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[3]]*100+"%\n" + resultLabel.get(r[4]) +"\t\t\t\t\t\t\tProbability:\t\t"+ new_resluts[r[4]]*100+
-                            "%\nPredict Used:"+time + "ms"+ "\n\nMake wav file Used:"+Constents.makewavfiletime + "ms";
-//                    callpythonadd();//add code
-                    result_text.setText(show_text);
+                    String show_text="";
+                    show_text = "You might write：\n" + resultLabel.get(r[0]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[0]] * 100 + "%\n" + resultLabel.get(r[1]) +
+                            "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[1]] * 100 + "%\n" + resultLabel.get(r[2]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[2]] * 100 +
+                            "%\n" + resultLabel.get(r[3]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[3]] * 100 + "%\n" + resultLabel.get(r[4]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[4]] * 100 +
+                            "%\nPredict Used:" + time + "ms" + "\n\nMake wav file Used:" + Constents.makewavfiletime + "ms";
 
+//                    callpythonadd();//add code
+//                    result_text.setText(show_text);
+//                    Log.i(TAG,show_text);
+                    //add 10.15
+                    Message message2=new Message();
+                    message2.what=100;
+                    message2.obj=show_text;
+                    predictHandler2.sendMessage(message2);
+                    //add 10.15
 //                    展示频谱图
+                    //change 10.15
                     Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
-                    picture1.setImageBitmap(bitmap);
+//                    picture1.setImageBitmap(bitmap);
+                    //change 10.15
+
+                    //add 10.15
+                    Message message3=new Message();
+                    message3.what=100;
+                    message3.obj=bitmap;
+                    predictHandler3.sendMessage(message3);
+                    //add 10.15
+                    return new_resluts;
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             }
         }
+        return new_resluts;
+
+    }
+    //add 11.8
+    public void setLanguageResult(double[] A){
+        char[][] output_result=null;
+        if(current_state==0){
+            save_result[save_times++]=A;
+            output_result=lg_model.testCode(save_result,save_times);
+            String showOption= "";
+            showOption=String.valueOf(output_result[0])+"  "+ String.valueOf(output_result[1])+"  "+ String.valueOf(output_result[2])+"  "+ String.valueOf(output_result[3])+"  "+ String.valueOf(output_result[4]);
+            Message message2=new Message();
+            message2.what=200;
+            message2.obj=showOption;
+            predictHandler2.sendMessage(message2);
+        }
+
+
     }
 
 //    added code6.10
