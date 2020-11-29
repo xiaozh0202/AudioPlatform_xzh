@@ -17,16 +17,21 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.chaquo.python.android.AndroidPlatform;
 import com.fruitbasket.audioplatform.AppCondition;
 import com.fruitbasket.audioplatform.AudioService;
 import com.fruitbasket.audioplatform.Constents;
@@ -50,28 +55,36 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.chaquo.python.Kwarg;
 import com.chaquo.python.PyObject;
-import com.chaquo.python.android.AndroidPlatform;
+
 import com.chaquo.python.Python;
 
 
-final public class MainActivity extends Activity {
+final public class MainActivity extends Activity implements View.OnClickListener{
     private static final String TAG=".MainActivity";
 
     private ToggleButton waveProducerTB;
     private SeekBar waveRateSB;
     private ToggleButton recorderTB;
     private TextView inputOption;
-
+    private Button deleteOne;
+    private Button deleteAll;
+    private Button blankspace;
+    private Button comma;
+    private Button end;
+    private EditText write_box;
+    private HorizontalScrollView horizontalScrollView;
+    private LinearLayout container;
+    private String[] showOption = new String[5];
+    private ArrayList<String> data;
 
     private Interpreter tflite = null;
     private boolean load_result = false;
-    private TextView result_text;
-    private ImageView picture1;
-    private EditText path_box;
+
     private List<String> resultLabel = new ArrayList<>();
     private double[][] save_result;
     private int save_times=0;
@@ -79,7 +92,7 @@ final public class MainActivity extends Activity {
     public boolean ispredicting;
     PredictHandler1 predictHandler1=new PredictHandler1();
     PredictHandler2 predictHandler2=new PredictHandler2();
-    PredictHandler3 predictHandler3=new PredictHandler3();
+    // PredictHandler3 predictHandler3=new PredictHandler3();
     //add 10.15
     private int channelOut= Player.CHANNEL_OUT_BOTH;
     private int channelIn= AudioFormat.CHANNEL_IN_MONO;
@@ -94,7 +107,7 @@ final public class MainActivity extends Activity {
     private int model_index = 0;
     private int[] ddims = {1, 3, 56, 56};
     private static final String[] PADDLE_MODEL = {
-            "model_v79","model_v48"
+            "model_v79"
     };
     private String[] texttype = {"digits","letter"};
 
@@ -122,13 +135,11 @@ final public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.activity_main);
-        result_text = (TextView) findViewById(R.id.result_text);
-        picture1 = (ImageView) findViewById(R.id.show_image);
-        path_box = (EditText) findViewById(R.id.user_path);
-        inputOption=(TextView) findViewById(R.id.inputOption);
-        // readCacheLabelFromLocalFile();
-//        load_model("model_v33");
+        //1121
+        readCacheLabelFromLocalFile();
+        load_model(PADDLE_MODEL[0]);
         initializeViews();
+        //1121
         long start1 = System.currentTimeMillis();
         initPython();
         this.obj1=this.py.getModule("function");
@@ -189,7 +200,19 @@ final public class MainActivity extends Activity {
 
     private void initializeViews(){
 
-
+        horizontalScrollView = (HorizontalScrollView) findViewById(R.id.word_basket);
+        container = (LinearLayout) findViewById(R.id.ItemContainer);
+        write_box = (EditText) findViewById(R.id.write_box);
+        blankspace = (Button) findViewById(R.id.blankspace_button);
+        comma = (Button) findViewById(R.id.comma_button);
+        end = (Button) findViewById(R.id.end_button);
+        deleteAll = (Button) findViewById(R.id.deletAll_button);
+        deleteOne = (Button) findViewById(R.id.backspace_button);
+        blankspace.setOnClickListener(this);
+        comma.setOnClickListener(this);
+        end.setOnClickListener(this);
+        deleteOne.setOnClickListener(this);
+        deleteAll.setOnClickListener(this);
         ToggleCheckedChangeListener tcListener=new ToggleCheckedChangeListener();
 //        channelOut= WavePlayer.CHANNEL_OUT_RIGHT;
         channelOut= WavePlayer.CHANNEL_OUT_LEFT;
@@ -225,56 +248,47 @@ final public class MainActivity extends Activity {
 
         recorderTB=(ToggleButton)findViewById(R.id.recorder_tb);
         recorderTB.setOnCheckedChangeListener(tcListener);
-
-//code change 2020.9.27
-        Button load_model = (Button) findViewById(R.id.load_model);
-        load_model.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showDialog();
-            }
-        });
-
-
-
         //code change 2020.9.27
     }
+    //将字符串数组与集合绑定起来
+    private void bindData()
+    {
 
-
-    public void showDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-        // set dialog title
-        builder.setTitle("Please select model");
-
-        // set dialog icon
-        builder.setIcon(android.R.drawable.ic_dialog_alert);
-
-        // able click other will cancel
-        builder.setCancelable(true);
-
-        // cancel button
-        builder.setNegativeButton("cancel", null);
-
-        // set list
-        builder.setSingleChoiceItems(PADDLE_MODEL, model_index, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                save_times=0;
-                save_result=new double[15][];
-                model_index = which;
-                current_state=which;
-                readCacheLabelFromLocalFile();
-                load_model(PADDLE_MODEL[model_index]);
-
-                dialog.dismiss();
-            }
-        });
-
-        // show dialog
-        builder.show();
+        Collections.addAll(data, showOption);
     }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.blankspace_button:
+                addText(" ");
+                break;
+            case R.id.comma_button:
+                addText("，");
+                break;
+            case R.id.end_button:
+                addText("。");
+                break;
+            case R.id.backspace_button:
+                deleteText();
+                break;
+            case  R.id.deletAll_button:
+                write_box.setText("");
+                break;
+        }
+    }
+    private  void deleteText(){
+        Log.d(TAG, "deleteText: ");
+        String S =write_box.getText().toString() ;
+        if(S.equals("")||S==null)
+            return;
+        write_box.setText(S.substring(0,S.length()-1));
+    }
+    private void addText(String s){
+        Log.d(TAG, "addText: " + s);
+        String S =write_box.getText().toString() + s ;
+        write_box.setText(S);
+    }
 
     private class ToggleCheckedChangeListener implements CompoundButton.OnCheckedChangeListener{
         private static final String TAG="...TCCListener";
@@ -291,7 +305,9 @@ final public class MainActivity extends Activity {
                     break;
                 case R.id.recorder_tb:
                     if (isChecked) {
-                        Constents.user_path = path_box.getText().toString();
+                        //1121
+                        Constents.user_path = "Acoudigits";
+                        //1121
                         startRecordWav();
                     } else {
                         try {
@@ -359,10 +375,7 @@ final public class MainActivity extends Activity {
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-                //delete 10.14
-//                PredictWav(Constents.file_path);
-                //delete 10.14
-//            added code6.11
+
             }
             else{
                 Log.w(TAG,"audioService==null");
@@ -507,6 +520,11 @@ final public class MainActivity extends Activity {
 
     //change 11.8
     private void readCacheLabelFromLocalFile() {
+
+        save_times=0;
+        save_result=new double[15][];
+        model_index = 0;
+        current_state=0;
         try {
             resultLabel.clear();
             AssetManager assetManager = getApplicationContext().getAssets();
@@ -538,30 +556,45 @@ final public class MainActivity extends Activity {
     public class PredictHandler2 extends Handler{
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == 100) {
-                String res = (String) msg.obj;
-                result_text.setText(res);
-            }
             //add 11.8
             if(msg.what==200){
-                String res=(String)msg.obj;
-
-                inputOption.setText(res);
+                data = new ArrayList<>();
+                bindData();
+                bindHZSWData();
             }
         }
     }
+    //将集合中的数据绑定到HorizontalScrollView上
+    private void bindHZSWData()
+    {	//为布局中textview设置好相关属性
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.gravity = Gravity.CENTER;
+        layoutParams.setMargins(20, 10, 20, 10);
+        container.removeAllViews();
 
-    public class PredictHandler3 extends Handler{
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == 100) {
-                Bitmap bitmap = (Bitmap) msg.obj;
-                picture1.setImageBitmap(bitmap);
-            }
+        for (int index = 0; index< data.size();index++)
+        {
+            TextView textView = new TextView(this);
+            textView.setText(data.get(index));
+            textView.setTextSize(16);
+            //textView.setTextColor(Color.WHITE);
+            textView.setLayoutParams(layoutParams);
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    selectWord(view);
+                }
+            });
+            container.addView(textView);
+            container.invalidate();
         }
     }
-    //add 10.15
+    private void selectWord(View view){
+        String S =write_box.getText().toString() +( (TextView) view).getText().toString();
+        write_box.setText(S);
 
+    }
 
     private double[] PredictWav(String path){
         File f = new File(path);
@@ -571,6 +604,7 @@ final public class MainActivity extends Activity {
         double[] new_resluts=null;
         while (true){
             if(f.exists()){
+
                 new_resluts= new double[currentsum];
                 //change 10.15
                 String str=path + " make success";
@@ -620,28 +654,15 @@ final public class MainActivity extends Activity {
                             "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[1]] * 100 + "%\n" + resultLabel.get(r[2]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[2]] * 100 +
                             "%\n" + resultLabel.get(r[3]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[3]] * 100 + "%\n" + resultLabel.get(r[4]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[4]] * 100 +
                             "%\nPredict Used:" + time + "ms" + "\n\nMake wav file Used:" + Constents.makewavfiletime + "ms";
+                    if(new_resluts==null)
+                        Log.d(TAG, "PredictWav: null");
 
-//                    callpythonadd();//add code
-//                    result_text.setText(show_text);
-//                    Log.i(TAG,show_text);
-                    //add 10.15
-                    Message message2=new Message();
-                    message2.what=100;
-                    message2.obj=show_text;
-                    predictHandler2.sendMessage(message2);
-                    //add 10.15
 //                    展示频谱图
                     //change 10.15
                     Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
 //                    picture1.setImageBitmap(bitmap);
                     //change 10.15
 
-                    //add 10.15
-                    Message message3=new Message();
-                    message3.what=100;
-                    message3.obj=bitmap;
-                    predictHandler3.sendMessage(message3);
-                    //add 10.15
                     return new_resluts;
 
                 } catch (Exception e) {
@@ -659,8 +680,13 @@ final public class MainActivity extends Activity {
         if(current_state==0){
             save_result[save_times++]=A;
             output_result=lg_model.testCode(save_result,save_times);
-            String showOption= "";
-            showOption=String.valueOf(output_result[0])+"  "+ String.valueOf(output_result[1])+"  "+ String.valueOf(output_result[2])+"  "+ String.valueOf(output_result[3])+"  "+ String.valueOf(output_result[4]);
+            //1121
+            int length = 0;
+            for(int i=0;i<5;i++){
+                if(!String.valueOf(output_result[i]).equals(""))
+                    showOption[length++] = String.valueOf(output_result[i]);
+            }
+            //1121
             Message message2=new Message();
             message2.what=200;
             message2.obj=showOption;

@@ -1,98 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <LinearLayout
+    <SeekBar
+        android:id="@+id/waverate_sb"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+    <EditText
+        android:id="@+id/write_box"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:gravity="top"
+        android:hint="请输入内容">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="20dp"
-            android:text="@string/app_full_name" />
+    </EditText>
 
-        <SeekBar
-            android:id="@+id/waverate_sb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
-
-
-        <!--<TextView-->
-        <!--android:id="@+id/waverate_tv"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_gravity="center_horizontal"/>-->
-
-        <Button
-            android:id="@+id/load_model"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal|center"
-            android:layout_weight="1"
-            android:text="@string/loadmodel" />
+    <HorizontalScrollView
+        android:id="@+id/word_basket"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:layout_below="@+id/write_box"
+        android:layout_width="match_parent"
+        android:layout_height="65dp">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/wave_player_2" />
-
-            <ToggleButton
-                android:id="@+id/wave_player_tb"
-                android:layout_width="99dp"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:layout_width="84dp"
-                android:layout_height="wrap_content"
-                android:text="@string/record_wav" />
-
-            <ToggleButton
-                android:id="@+id/recorder_tb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <EditText
-            android:id="@+id/user_path"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:hint="请输入要保存的路径"
-            android:gravity="top" />
-
-
-
-        <TextView
-            android:id="@+id/result_text"
-            android:layout_width="match_parent"
+            android:id="@+id/ItemContainer"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="result"
-            android:textSize="15sp" />
+            android:orientation="horizontal"/>
 
-        <ImageView
-            android:id="@+id/show_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@id/result_text"
-            android:layout_alignParentTop="true" />
+    </HorizontalScrollView>
 
-        <TextView android:id="@+id/inputOption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+    <LinearLayout
+        android:id="@+id/input_char"
+        android:orientation="horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/word_basket" >
 
+        <Button
+            android:id="@+id/blankspace_button"
+            android:layout_width="120dp"
+            android:layout_height="65dp"
+            android:textSize="20sp"
+            android:text = "空格">
+        </Button>
 
-
+        <Button
+            android:id="@+id/comma_button"
+            android:textSize="20sp"
+            android:layout_width="120dp"
+            android:layout_height="65dp"
+            android:text="，">
+        </Button>
+        <Button
+            android:id="@+id/end_button"
+            android:textSize="20sp"
+            android:layout_width="120dp"
+            android:layout_height="65dp"
+            android:text="。">
+        </Button>
     </LinearLayout>
 
-</ScrollView>
+    <LinearLayout
+        android:id="@+id/input_func"
+        android:orientation="horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/input_char" >
+
+        <Button
+            android:id="@+id/backspace_button"
+            android:layout_width="175dp"
+            android:layout_height="65dp"
+            android:textSize="18sp"
+            android:text="退格">
+        </Button>
+        <Button
+            android:id="@+id/deletAll_button"
+            android:layout_width="175dp"
+            android:layout_height="65dp"
+            android:textSize="18sp"
+            android:text="全部删除">
+        </Button>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_below="@+id/input_func"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="wave player" />
+
+        <ToggleButton
+            android:id="@+id/wave_player_tb"
+            android:layout_width="99dp"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="113dp"
+            android:layout_height="wrap_content"
+            android:text="record wav" />
+
+        <ToggleButton
+            android:id="@+id/recorder_tb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+</RelativeLayout>

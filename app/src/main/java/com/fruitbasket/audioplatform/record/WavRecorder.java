@@ -1,3 +1,4 @@
+
 package com.fruitbasket.audioplatform.record;
 
 import android.content.Context;
@@ -10,23 +11,12 @@ import android.util.Log;
 import com.fruitbasket.audioplatform.AppCondition;
 import com.fruitbasket.audioplatform.Constents;
 import com.fruitbasket.audioplatform.MyApp;
-import com.fruitbasket.audioplatform.WavHeader;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -46,7 +36,7 @@ public class WavRecorder extends Recorder {
     private static final int readResultSize = 3584;
     public static int timeOfEachRecord=6000;//每一段音频的时长，单位ms
     public static Byte[] recordData = new Byte[(int) (readResultSize*whileTime)];
-    public static int sleepTime=500;//检测到有动作后的线程暂停时长，单位ms
+    public static int sleepTime=0;//检测到有动作后的线程暂停时长，单位ms
 
     private boolean isRecording;
     public static String audioName;//录音文件的名字
@@ -271,11 +261,9 @@ public class WavRecorder extends Recorder {
         isRecording = false;
         return true;
     }
-
     //add 10.15
     public boolean isActing(Byte[][] bytes,String path,int T,DataOutputStream output2){
         boolean isacting=true;
-        System.out.println("wavrecord:"+path);
         if(isacting)
         {
             try {

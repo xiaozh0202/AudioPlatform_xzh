@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">AcouDigits</string>
+    <string name="app_name">AcouDigit</string>
     <string name="app_version_name">v2.0</string>
-    <string name="app_full_name">AcouDigits v2.0-带有语言模型</string>
+    <string name="app_full_name">AcouDigitWithLM</string>
 
     <string name="wave_player">wave player</string>
     <string name="choose_channel_out">choose a channel out : </string>
@@ -12,7 +12,7 @@
     <string name="choose_channel_in">choose a channel in : </string>
     <string name="mono">mono</string>
     <string name="stereo">stereo</string>
-    <string name="record_wav">record wav</string>\
+    <string name="record_wav">record wav : </string>
     <string name="start_both">start both</string>
     <string name="create_dir">create  directory</string>
     <string name="top_mic">top_mic</string>
