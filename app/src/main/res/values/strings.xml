@@ -22,6 +22,11 @@
     <string name="freqNum">freqNum</string>
     <string name="simpleRate">simpleRate</string>
     <string name="loadmodel">load model</string>>
+    <string name="space">Space</string>>
+    <string name="delete">Delete</string>>
+    <string name="backspace">Backspace</string>>
+    <string name="clear">Clear</string>>
+    <string name="switchmodel">switch</string>
 
 
 

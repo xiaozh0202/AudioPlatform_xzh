@@ -44,27 +44,32 @@
         android:layout_below="@+id/word_basket" >
 
         <Button
+            android:id="@+id/switch_button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/switchmodel" />
+
+        <Button
             android:id="@+id/blankspace_button"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="65dp"
-            android:textSize="20sp"
-            android:text = "空格">
-        </Button>
+            android:text="@string/space"
+            android:textSize="20sp"/>
 
         <Button
             android:id="@+id/comma_button"
-            android:textSize="20sp"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="65dp"
-            android:text="，">
-        </Button>
+            android:text="，"
+            android:textSize="20sp"/>
+
         <Button
             android:id="@+id/end_button"
-            android:textSize="20sp"
-            android:layout_width="120dp"
+            android:layout_width="76dp"
             android:layout_height="65dp"
-            android:text="。">
-        </Button>
+            android:text="。"
+            android:textSize="20sp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -77,19 +82,25 @@
         android:layout_below="@+id/input_char" >
 
         <Button
-            android:id="@+id/backspace_button"
-            android:layout_width="175dp"
+            android:id="@+id/delete_one_button"
+            android:layout_width="103dp"
             android:layout_height="65dp"
-            android:textSize="18sp"
-            android:text="退格">
-        </Button>
+            android:text="@string/delete"
+            android:textSize="18sp"/>
+
         <Button
             android:id="@+id/deletAll_button"
-            android:layout_width="175dp"
+            android:layout_width="123dp"
             android:layout_height="65dp"
-            android:textSize="18sp"
-            android:text="全部删除">
-        </Button>
+            android:text="@string/clear"
+            android:textSize="18sp"/>
+
+        <Button
+            android:id="@+id/backspace"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/backspace" />
     </LinearLayout>
 
     <LinearLayout

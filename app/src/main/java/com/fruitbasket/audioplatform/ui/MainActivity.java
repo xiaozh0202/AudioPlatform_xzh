@@ -76,6 +76,9 @@ final public class MainActivity extends Activity implements View.OnClickListener
     private Button blankspace;
     private Button comma;
     private Button end;
+    //add 11.29
+    private Button switch_button,backspace_button;
+    //add 11.29
     private EditText write_box;
     private HorizontalScrollView horizontalScrollView;
     private LinearLayout container;
@@ -86,7 +89,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
     private boolean load_result = false;
 
     private List<String> resultLabel = new ArrayList<>();
-    private double[][] save_result;
+    private double[][] save_result = new double[15][];
     private int save_times=0;
     //add 10.15
     public boolean ispredicting;
@@ -104,12 +107,16 @@ final public class MainActivity extends Activity implements View.OnClickListener
     public  int ifreqNum = 1;
     public  int iSimpleHz = 44100;
     private int current_state;
-    private int model_index = 0;
+    private int type_index = 0;
     private int[] ddims = {1, 3, 56, 56};
     private static final String[] PADDLE_MODEL = {
-            "model_v79"
+            "letter_model","digit_model"
     };
-    private String[] texttype = {"digits","letter"};
+    private int[] labelnum = {26,10};
+    private static final String[] label_name = {
+            "26labels.txt","30labels.txt"
+    };
+
 
     private Python py;
     private PyObject obj1;
@@ -136,8 +143,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.activity_main);
         //1121
-        readCacheLabelFromLocalFile();
-        load_model(PADDLE_MODEL[0]);
+        load_model(PADDLE_MODEL[type_index]);
         initializeViews();
         //1121
         long start1 = System.currentTimeMillis();
@@ -200,6 +206,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
 
     private void initializeViews(){
 
+        //edit 11.29
         horizontalScrollView = (HorizontalScrollView) findViewById(R.id.word_basket);
         container = (LinearLayout) findViewById(R.id.ItemContainer);
         write_box = (EditText) findViewById(R.id.write_box);
@@ -207,12 +214,17 @@ final public class MainActivity extends Activity implements View.OnClickListener
         comma = (Button) findViewById(R.id.comma_button);
         end = (Button) findViewById(R.id.end_button);
         deleteAll = (Button) findViewById(R.id.deletAll_button);
-        deleteOne = (Button) findViewById(R.id.backspace_button);
+        deleteOne = (Button) findViewById(R.id.delete_one_button);
+        switch_button=(Button) findViewById(R.id.switch_button);
+        backspace_button=(Button)findViewById(R.id.backspace);
+        backspace_button.setOnClickListener(this);
         blankspace.setOnClickListener(this);
         comma.setOnClickListener(this);
         end.setOnClickListener(this);
         deleteOne.setOnClickListener(this);
         deleteAll.setOnClickListener(this);
+        switch_button.setOnClickListener(this);
+        //edit 11.29
         ToggleCheckedChangeListener tcListener=new ToggleCheckedChangeListener();
 //        channelOut= WavePlayer.CHANNEL_OUT_RIGHT;
         channelOut= WavePlayer.CHANNEL_OUT_LEFT;
@@ -253,15 +265,16 @@ final public class MainActivity extends Activity implements View.OnClickListener
     //将字符串数组与集合绑定起来
     private void bindData()
     {
-
         Collections.addAll(data, showOption);
     }
 
+    //edit 11.29
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.blankspace_button:
                 addText(" ");
+                EraseLanguageResult();//不需要清空save_result可以注释掉
                 break;
             case R.id.comma_button:
                 addText("，");
@@ -269,27 +282,40 @@ final public class MainActivity extends Activity implements View.OnClickListener
             case R.id.end_button:
                 addText("。");
                 break;
-            case R.id.backspace_button:
+            case R.id.delete_one_button:
                 deleteText();
                 break;
             case  R.id.deletAll_button:
                 write_box.setText("");
+                write_box.setSelection(write_box.getText().length());
+                EraseLanguageResult();
+                break;
+            case R.id.backspace:
+                MinusLanguageResult();
+                break;
+            case R.id.switch_button:
+                switch_type();
                 break;
         }
     }
+
     private  void deleteText(){
         Log.d(TAG, "deleteText: ");
         String S =write_box.getText().toString() ;
         if(S.equals("")||S==null)
             return;
         write_box.setText(S.substring(0,S.length()-1));
+        write_box.setSelection(write_box.getText().length());
     }
+
     private void addText(String s){
         Log.d(TAG, "addText: " + s);
         String S =write_box.getText().toString() + s ;
         write_box.setText(S);
+        write_box.setSelection(write_box.getText().length());
     }
 
+    //edit 11.29
     private class ToggleCheckedChangeListener implements CompoundButton.OnCheckedChangeListener{
         private static final String TAG="...TCCListener";
 
@@ -306,7 +332,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
                 case R.id.recorder_tb:
                     if (isChecked) {
                         //1121
-                        Constents.user_path = "Acoudigits";
+                        Constents.user_path = "halffinshed";
                         //1121
                         startRecordWav();
                     } else {
@@ -351,7 +377,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
         private void startRecordWav(){
             Log.i(TAG,"startRecordWav()");
             // add 10.14
-            GetPredictPath();
+//            GetPredictPath();
             //add 10.14
             if(audioService!=null){
                 audioService.startRecordWav(
@@ -375,7 +401,8 @@ final public class MainActivity extends Activity implements View.OnClickListener
                 audioService.stopRecord();
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
-
+                double[] A=PredictWav(Constents.file_path);
+                setLanguageResult(A);
             }
             else{
                 Log.w(TAG,"audioService==null");
@@ -437,6 +464,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
 
     // load infer model
     private void load_model(String model) {
+        readCacheLabelFromLocalFile();
         try {
             tflite = new Interpreter(loadModelFile(model).asReadOnlyBuffer());
             Toast.makeText(MainActivity.this, model + " model load success", Toast.LENGTH_SHORT).show();
@@ -520,18 +548,10 @@ final public class MainActivity extends Activity implements View.OnClickListener
 
     //change 11.8
     private void readCacheLabelFromLocalFile() {
-
-        save_times=0;
-        save_result=new double[15][];
-        model_index = 0;
-        current_state=0;
         try {
             resultLabel.clear();
             AssetManager assetManager = getApplicationContext().getAssets();
-            String labelFileName="26labels.txt";
-            if(current_state==1)
-                labelFileName= "30labels.txt";
-            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open(labelFileName)));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open(label_name[type_index])));
             String readLine = null;
             while ((readLine = reader.readLine()) != null) {
                 resultLabel.add(readLine);
@@ -590,21 +610,23 @@ final public class MainActivity extends Activity implements View.OnClickListener
             container.invalidate();
         }
     }
+
+
+    //edit 11.29
     private void selectWord(View view){
         String S =write_box.getText().toString() +( (TextView) view).getText().toString();
         write_box.setText(S);
-
+        write_box.setSelection(write_box.getText().length());
     }
 
+
+    //edit 11.29
     private double[] PredictWav(String path){
         File f = new File(path);
-        int currentsum=10;
-        if(current_state==0)
-            currentsum=26;
+        int currentsum=labelnum[type_index];
         double[] new_resluts=null;
         while (true){
             if(f.exists()){
-
                 new_resluts= new double[currentsum];
                 //change 10.15
                 String str=path + " make success";
@@ -624,18 +646,9 @@ final public class MainActivity extends Activity implements View.OnClickListener
                 try {
                     float[][] labelProbArray;
                     System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+current_state);
-                    if(current_state==0)
-                        labelProbArray= new float[1][78];
-                    else
-                        labelProbArray=new float[1][30];
+                    labelProbArray= new float[1][labelnum[type_index]*3];
                     long start = System.currentTimeMillis();
                     // get predict result
-                    // multiple input
-//                    Object[] input = {inputData,inputData,inputData};
-//                    Map<Integer, Object> outputs = new HashMap();
-//                    outputs.put(0, labelProbArray);
-//                    tflite.runForMultipleInputsOutputs(input, outputs);
-                    // single input
                     tflite.run(inputData, labelProbArray);
                     long end = System.currentTimeMillis();
                     time = end - start;
@@ -649,22 +662,10 @@ final public class MainActivity extends Activity implements View.OnClickListener
 //                   add code 8.14
                     // show predict result and time
                     int[] r = get_max_result(new_resluts);
-                    String show_text="";
-                    show_text = "You might write：\n" + resultLabel.get(r[0]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[0]] * 100 + "%\n" + resultLabel.get(r[1]) +
-                            "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[1]] * 100 + "%\n" + resultLabel.get(r[2]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[2]] * 100 +
-                            "%\n" + resultLabel.get(r[3]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[3]] * 100 + "%\n" + resultLabel.get(r[4]) + "\t\t\t\t\t\t\tProbability:\t\t" + new_resluts[r[4]] * 100 +
-                            "%\nPredict Used:" + time + "ms" + "\n\nMake wav file Used:" + Constents.makewavfiletime + "ms";
+                    Log.d(TAG, "top-5:" + resultLabel.get(r[0])+resultLabel.get(r[1])+resultLabel.get(r[2])+resultLabel.get(r[3])+resultLabel.get(r[4]));
                     if(new_resluts==null)
                         Log.d(TAG, "PredictWav: null");
-
-//                    展示频谱图
-                    //change 10.15
-                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
-//                    picture1.setImageBitmap(bitmap);
-                    //change 10.15
-
                     return new_resluts;
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -692,9 +693,57 @@ final public class MainActivity extends Activity implements View.OnClickListener
             message2.obj=showOption;
             predictHandler2.sendMessage(message2);
         }
-
-
     }
 
 //    added code6.10
+
+    //add 11.29
+    public void MinusLanguageResult(){
+        char[][] output_result=null;
+        if(current_state==0){
+            System.out.println("减少结果");
+
+            if(save_times!=0){
+                save_times--;
+            }
+            output_result=lg_model.testCode(save_result,save_times);
+            //1121
+            int length = 0;
+            for(int i=0;i<5;i++){
+                showOption[length++] = String.valueOf(output_result[i]);
+            }
+            //1121
+            Message message2=new Message();
+            message2.what=200;
+            message2.obj=showOption;
+            predictHandler2.sendMessage(message2);
+        }
+
+    }
+
+    public void EraseLanguageResult(){
+        char[][] output_result=null;
+        if(current_state==0){
+
+            System.out.println("清空结果");
+            save_times=0;
+            output_result=lg_model.testCode(save_result,save_times);
+            //1121
+            int length = 0;
+            for(int i=0;i<5;i++){
+                showOption[length++] = String.valueOf("");
+            }
+            //1121
+            Message message2=new Message();
+            message2.what=200;
+            message2.obj=showOption;
+            predictHandler2.sendMessage(message2);
+        }
+    }
+    //add 11.29
+    public void switch_type(){
+        type_index = (type_index + 1)%2;;
+        load_model(PADDLE_MODEL[type_index]);
+    }
+
 }
