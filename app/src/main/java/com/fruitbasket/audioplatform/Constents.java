@@ -12,7 +12,8 @@ public class Constents {
     public static String user_path = null;
     public static int[] datalist = null;
     public static int dataLength = 0;
-    public static long makewavfiletime = 0;
+    public static long time_one = 0;
+    public static long time_two = 0;
     public static String audio_name = null;
     //add 10.14
     public static Queue<String> pathqueue = new LinkedTransferQueue<>();

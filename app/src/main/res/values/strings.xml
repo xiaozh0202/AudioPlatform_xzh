@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AcouDigit</string>
+    <string name="app_name">AcousticAPP</string>
     <string name="app_version_name">v2.0</string>
     <string name="app_full_name">AcouDigitWithLM</string>
 
@@ -26,7 +26,7 @@
     <string name="delete">Delete</string>>
     <string name="backspace">Backspace</string>>
     <string name="clear">Clear</string>>
-    <string name="switchmodel">switch</string>
+    <string name="switchmodel">0/A</string>
 
 
 

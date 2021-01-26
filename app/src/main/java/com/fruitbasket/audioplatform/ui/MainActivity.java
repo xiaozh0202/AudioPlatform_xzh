@@ -429,12 +429,12 @@ final public class MainActivity extends Activity implements View.OnClickListener
                                 setLanguageResult(A);
                             }
                             else{
-                                PredictWav(current_path);
-                                String showOption= "";
-                                Message message2=new Message();
-                                message2.what=200;
-                                message2.obj=showOption;
-                                predictHandler2.sendMessage(message2);
+                                double[] A = PredictWav(current_path);
+//                                String showOption= "";
+//                                Message message2=new Message();
+//                                message2.what=200;
+//                                message2.obj=showOption;
+//                                predictHandler2.sendMessage(message2);
                             }
 
 
@@ -553,6 +553,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
             AssetManager assetManager = getApplicationContext().getAssets();
             BufferedReader reader = new BufferedReader(new InputStreamReader(assetManager.open(label_name[type_index])));
             String readLine = null;
+            resultLabel.clear();
             while ((readLine = reader.readLine()) != null) {
                 resultLabel.add(readLine);
             }
@@ -645,7 +646,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
                 ByteBuffer inputData = getScaledMatrix(bmp, ddims);
                 try {
                     float[][] labelProbArray;
-                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+current_state);
+//                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+current_state);
                     labelProbArray= new float[1][labelnum[type_index]*3];
                     long start = System.currentTimeMillis();
                     // get predict result
@@ -660,9 +661,13 @@ final public class MainActivity extends Activity implements View.OnClickListener
                         new_resluts[i] = resluts[i*3] + resluts[i*3+1] + resluts[i*3+2];
                     }
 //                   add code 8.14
-                    // show predict result and time
                     int[] r = get_max_result(new_resluts);
                     Log.d(TAG, "top-5:" + resultLabel.get(r[0])+resultLabel.get(r[1])+resultLabel.get(r[2])+resultLabel.get(r[3])+resultLabel.get(r[4]));
+                    if (current_state==1){
+                        String[] tempa = {resultLabel.get(r[0]),resultLabel.get(r[1]),resultLabel.get(r[2]),resultLabel.get(r[3]),resultLabel.get(r[4])};
+                        setDigitResult(tempa);
+                        return new_resluts;
+                    }
                     if(new_resluts==null)
                         Log.d(TAG, "PredictWav: null");
                     return new_resluts;
@@ -680,12 +685,31 @@ final public class MainActivity extends Activity implements View.OnClickListener
         char[][] output_result=null;
         if(current_state==0){
             save_result[save_times++]=A;
+            Constents.time_one = System.currentTimeMillis();
             output_result=lg_model.testCode(save_result,save_times);
+            Constents.time_two = System.currentTimeMillis();
+            System.out.println("languagemodel time used:"+(Constents.time_two-Constents.time_one));
             //1121
             int length = 0;
             for(int i=0;i<5;i++){
                 if(!String.valueOf(output_result[i]).equals(""))
                     showOption[length++] = String.valueOf(output_result[i]);
+            }
+            //1121
+            Message message2=new Message();
+            message2.what=200;
+            message2.obj=showOption;
+            predictHandler2.sendMessage(message2);
+        }
+    }
+
+
+    public void setDigitResult(String[] A){
+        if(current_state==1){
+            int length = 0;
+            for(int i=0;i<5;i++){
+                if(!String.valueOf(A[i]).equals(""))
+                    showOption[length++] = String.valueOf(A[i]);
             }
             //1121
             Message message2=new Message();
@@ -718,16 +742,20 @@ final public class MainActivity extends Activity implements View.OnClickListener
             message2.obj=showOption;
             predictHandler2.sendMessage(message2);
         }
+        else {
+            EraseLanguageResult();
+        }
 
     }
 
     public void EraseLanguageResult(){
-        char[][] output_result=null;
-        if(current_state==0){
+//        char[][] output_result=null;
+
+//        if(current_state==0){
 
             System.out.println("清空结果");
             save_times=0;
-            output_result=lg_model.testCode(save_result,save_times);
+//            output_result=lg_model.testCode(save_result,save_times);
             //1121
             int length = 0;
             for(int i=0;i<5;i++){
@@ -738,12 +766,14 @@ final public class MainActivity extends Activity implements View.OnClickListener
             message2.what=200;
             message2.obj=showOption;
             predictHandler2.sendMessage(message2);
-        }
+//        }
     }
     //add 11.29
     public void switch_type(){
-        type_index = (type_index + 1)%2;;
+        type_index = (type_index + 1)%2;
+        current_state = type_index;
         load_model(PADDLE_MODEL[type_index]);
+        EraseLanguageResult();
     }
 
 }

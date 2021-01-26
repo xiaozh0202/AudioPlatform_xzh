@@ -9,13 +9,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"/>
+
     <EditText
         android:id="@+id/write_box"
-        android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="150dp"
+        android:layout_marginTop="10dp"
         android:gravity="top"
-        android:hint="请输入内容">
+        android:background="@drawable/edit_background"
+        android:hint="Input Here">
 
     </EditText>
 
@@ -25,6 +27,7 @@
         android:layout_marginBottom="5dp"
         android:layout_below="@+id/write_box"
         android:layout_width="match_parent"
+        android:background="@drawable/edit_background2"
         android:layout_height="65dp">
 
         <LinearLayout
@@ -36,92 +39,102 @@
     </HorizontalScrollView>
 
     <LinearLayout
-        android:id="@+id/input_char"
-        android:orientation="horizontal"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/word_basket" >
-
-        <Button
-            android:id="@+id/switch_button"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="@string/switchmodel" />
-
-        <Button
-            android:id="@+id/blankspace_button"
-            android:layout_width="wrap_content"
-            android:layout_height="65dp"
-            android:text="@string/space"
-            android:textSize="20sp"/>
-
-        <Button
-            android:id="@+id/comma_button"
-            android:layout_width="wrap_content"
-            android:layout_height="65dp"
-            android:text="，"
-            android:textSize="20sp"/>
-
-        <Button
-            android:id="@+id/end_button"
-            android:layout_width="76dp"
-            android:layout_height="65dp"
-            android:text="。"
-            android:textSize="20sp"/>
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/input_func"
-        android:orientation="horizontal"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
+        android:layout_width="380dp"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/input_char"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:layout_below="@+id/input_char" >
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/delete_one_button"
             android:layout_width="103dp"
             android:layout_height="65dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/edit_background3"
             android:text="@string/delete"
-            android:textSize="18sp"/>
+            android:textAllCaps="false"
+            android:textSize="22sp" />
 
         <Button
             android:id="@+id/deletAll_button"
-            android:layout_width="123dp"
+            android:layout_width="90dp"
             android:layout_height="65dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/edit_background3"
             android:text="@string/clear"
-            android:textSize="18sp"/>
+            android:textAllCaps="false"
+            android:textSize="22sp" />
 
         <Button
             android:id="@+id/backspace"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="@string/backspace" />
+            android:background="@drawable/edit_background3"
+            android:text="@string/backspace"
+            android:textAllCaps="false"
+            android:textSize="22sp" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/input_char"
+        android:layout_width="380dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/word_basket"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/switch_button"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/edit_background3"
+            android:text="@string/switchmodel"
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/blankspace_button"
+            android:layout_width="110dp"
+            android:layout_height="65dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/edit_background3"
+            android:text="@string/space"
+            android:textAllCaps="false"
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/comma_button"
+            android:layout_width="70dp"
+            android:layout_height="65dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/edit_background3"
+            android:text=","
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/end_button"
+            android:layout_width="70dp"
+            android:layout_height="65dp"
+            android:background="@drawable/edit_background3"
+            android:text="."
+            android:textSize="22sp" />
+    </LinearLayout>
+
+
 
     <LinearLayout
         android:layout_below="@+id/input_func"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="wave player" />
-
         <ToggleButton
             android:id="@+id/wave_player_tb"
             android:layout_width="99dp"
             android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="113dp"
-            android:layout_height="wrap_content"
-            android:text="record wav" />
 
         <ToggleButton
             android:id="@+id/recorder_tb"
