@@ -402,7 +402,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
 //            added code6.11
                 Log.i(TAG,"path is :" + Constents.file_path);
                 double[] A=PredictWav(Constents.file_path);
-                setLanguageResult(A);
+//                setLanguageResult(A);
             }
             else{
                 Log.w(TAG,"audioService==null");
@@ -426,15 +426,10 @@ final public class MainActivity extends Activity implements View.OnClickListener
                             System.out.println("mainactivity11111:"+current_path);
                             if(current_state==0) {
                                 double[] A=PredictWav(current_path);
-                                setLanguageResult(A);
+//                                setLanguageResult(A);
                             }
                             else{
                                 double[] A = PredictWav(current_path);
-//                                String showOption= "";
-//                                Message message2=new Message();
-//                                message2.what=200;
-//                                message2.obj=showOption;
-//                                predictHandler2.sendMessage(message2);
                             }
 
 
@@ -624,6 +619,7 @@ final public class MainActivity extends Activity implements View.OnClickListener
     //edit 11.29
     private double[] PredictWav(String path){
         File f = new File(path);
+        Log.i(TAG,"file path is " +path);
         int currentsum=labelnum[type_index];
         double[] new_resluts=null;
         while (true){
@@ -663,8 +659,9 @@ final public class MainActivity extends Activity implements View.OnClickListener
 //                   add code 8.14
                     int[] r = get_max_result(new_resluts);
                     Log.d(TAG, "top-5:" + resultLabel.get(r[0])+resultLabel.get(r[1])+resultLabel.get(r[2])+resultLabel.get(r[3])+resultLabel.get(r[4]));
+                    String[] tempa = {resultLabel.get(r[0]),resultLabel.get(r[1]),resultLabel.get(r[2]),resultLabel.get(r[3]),resultLabel.get(r[4])};
+                    seletterResult(tempa);
                     if (current_state==1){
-                        String[] tempa = {resultLabel.get(r[0]),resultLabel.get(r[1]),resultLabel.get(r[2]),resultLabel.get(r[3]),resultLabel.get(r[4])};
                         setDigitResult(tempa);
                         return new_resluts;
                     }
@@ -717,6 +714,20 @@ final public class MainActivity extends Activity implements View.OnClickListener
             message2.obj=showOption;
             predictHandler2.sendMessage(message2);
         }
+    }
+
+
+    public void seletterResult(String[] A){
+            int length = 0;
+            for(int i=0;i<5;i++){
+                if(!String.valueOf(A[i]).equals(""))
+                    showOption[length++] = String.valueOf(A[i]);
+            }
+            //1121
+            Message message2=new Message();
+            message2.what=200;
+            message2.obj=showOption;
+            predictHandler2.sendMessage(message2);
     }
 
 //    added code6.10
